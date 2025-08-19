@@ -31,7 +31,7 @@ const findCommand = (input: string) => {
 const parseInput = (input: string) => {
 	const normalizedInput = input.trim().toLowerCase();
 
-	const [action, ...rest] = input.split(" ");
+	const [action, ...rest] = normalizedInput.split(" ");
 	const target = rest.join(" ");
 
 	return { normalizedInput, action, target };

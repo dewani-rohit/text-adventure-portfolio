@@ -10,10 +10,18 @@ interface Room {
 	detailedDescription: string;
 }
 
+interface Item {
+	id: string;
+	name: string;
+	briefDescription: string;
+	detailedDescription: string;
+}
+
 interface GameState {
 	history: HistoryLine[];
 	currentRoom: string;
 	previousRoom: string | null;
+	roomItems: { [roomId: string]: string[] };
 }
 
 interface GameActions {

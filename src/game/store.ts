@@ -2,11 +2,20 @@ import { create } from "zustand";
 import type { StorageValue } from "zustand/middleware";
 import { persist } from "zustand/middleware";
 import { rooms } from "./rooms";
+import { generateRoomItemsDescription } from "../utils";
+import { coffeeMachine } from "./items/coffeeMachine";
+import { clock } from "./items/clock";
+import { fridge } from "./items/fridge";
+
+const INITIAL_ROOM_ITEMS: { [roomId: string]: string[] } = {
+	lobby: [coffeeMachine.id, clock.id, fridge.id],
+};
 
 const initializeGameState = () => ({
 	history: [],
 	currentRoom: "lobby",
 	previousRoom: null,
+	roomItems: INITIAL_ROOM_ITEMS,
 });
 
 export const useGameStore = create<GameStore>()(
@@ -39,8 +48,12 @@ export const useGameStore = create<GameStore>()(
 				const room = rooms[roomId];
 
 				if (room) {
-					get().addLine(`\n[${room.name}]`);
-					get().addLine(room.briefDescription);
+					const roomDesc = room.briefDescription;
+					const roomItems = get().roomItems[room.id];
+
+					const description = generateRoomItemsDescription(roomDesc, roomItems);
+
+					get().addLine(`\n[${room.name}]\n${description}`);
 				}
 			},
 		}),

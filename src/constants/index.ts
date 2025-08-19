@@ -1,5 +1,6 @@
 export const helpResponse = `Available commands:
-• help - Displays the catalogue of sanctioned commands (because apparently intuition isn't enough).`;
+• help - Displays the catalogue of sanctioned commands (because apparently intuition isn't enough).
+• look - Survey your surroundings in detail.`;
 
 export const blankResponses = [
 	"Input not detected. Silence may be profound, but it is also unproductive.",
