@@ -1,0 +1,35 @@
+@import url("https://fonts.googleapis.com/css2?family=Fira+Code:wght@300..700&display=swap");
+@import "tailwindcss";
+
+:root {
+	--bg: oklch(15.589% 0.00531 145.47);
+	--panel: oklch(22.522% 0.01755 279.914);
+	--text: oklch(83.902% 0.0001 271.152);
+	--muted: oklch(74.208% 0.01173 274.819);
+	--accent: oklch(84.816% 0.25725 143.837);
+	--mono: "Fira Code", monospace;
+}
+
+@theme {
+	--color-bg: var(--bg);
+	--color-panel: var(--panel);
+	--color-text: var(--text);
+	--color-accent: var(--accent);
+	--color-muted: var(--muted);
+	--font-mono: var(--mono);
+}
+
+html,
+body,
+#root {
+	min-height: 100vh;
+}
+
+body {
+	background: var(--bg);
+	color: var(--text);
+	font-family: var(--mono);
+	font-size: 0.95em;
+	letter-spacing: -0.05em;
+	max-width: 960px;
+}

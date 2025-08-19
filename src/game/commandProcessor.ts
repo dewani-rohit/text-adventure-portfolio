@@ -1,0 +1,64 @@
+import { blankResponses, unknownResponses } from "../constants";
+import { commands } from "./commands";
+import { useGameStore } from "./store";
+
+const createCommandMaps = (commands: CommandDefinition[]) => {
+	const commandMap = new Map<string, CommandDefinition>();
+	const aliasMap = new Map<string, CommandDefinition>();
+
+	commands.forEach((cmd) => {
+		commandMap.set(cmd.name.toLowerCase(), cmd);
+		cmd.aliases?.forEach((alias) => {
+			aliasMap.set(alias.toLowerCase(), cmd);
+		});
+	});
+
+	return { commandMap, aliasMap };
+};
+
+// const createCommandProcessor = () => {
+
+const findCommand = (input: string) => {
+	const { commandMap, aliasMap } = createCommandMaps(commands);
+
+	const normalizedInput = input.toLowerCase();
+
+	return (
+		commandMap.get(normalizedInput) || aliasMap.get(normalizedInput) || null
+	);
+};
+
+const parseInput = (input: string) => {
+	const normalizedInput = input.trim().toLowerCase();
+
+	const [action, ...rest] = input.split(" ");
+	const target = rest.join(" ");
+
+	return { normalizedInput, action, target };
+};
+
+export const processCommand = (input: string) => {
+	const { normalizedInput, action, target } = parseInput(input);
+	const context = useGameStore.getState();
+
+	context.addLine(`> ${normalizedInput}`, "player");
+
+	if (!normalizedInput) {
+		const response =
+			blankResponses[Math.floor(Math.random() * blankResponses.length)];
+		context.addLine(response);
+		return;
+	}
+
+	const command = findCommand(action);
+
+	if (!command) {
+		const response =
+			unknownResponses[Math.floor(Math.random() * unknownResponses.length)];
+		context.addLine(response);
+		return;
+	}
+
+	command.execute(target, context);
+};
+// };
