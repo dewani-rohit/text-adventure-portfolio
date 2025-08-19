@@ -12,7 +12,7 @@ const handleHelp = (target: string, context: GameStore) => {
 };
 
 const handleRestart = (target: string, context: GameStore) => {
-	if (target) {
+	if (target && target !== "game") {
 		context.addLine(
 			`You have used the command "restart" in a way I do not understand.`
 		);

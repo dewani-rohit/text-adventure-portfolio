@@ -3,12 +3,16 @@ import type { StorageValue } from "zustand/middleware";
 import { persist } from "zustand/middleware";
 import { rooms } from "./rooms";
 
+const initializeGameState = () => ({
+	history: [],
+	currentRoom: "lobby",
+	previousRoom: null,
+});
+
 export const useGameStore = create<GameStore>()(
 	persist(
 		(set, get) => ({
-			history: [],
-			currentRoom: "lobby",
-			previousRoom: null,
+			...initializeGameState(),
 
 			addLine: (text, role = "system") =>
 				set((state) => ({
@@ -17,13 +21,13 @@ export const useGameStore = create<GameStore>()(
 
 			startGame: () => {
 				if (get().history.length === 0) {
-					set({ history: [], currentRoom: "lobby", previousRoom: null });
+					set(initializeGameState());
 					get().setCurrentRoom("lobby");
 				}
 			},
 
 			restartGame: () => {
-				set({ history: [], currentRoom: "lobby", previousRoom: null });
+				set(initializeGameState());
 				get().setCurrentRoom("lobby");
 			},
 
