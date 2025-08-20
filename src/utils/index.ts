@@ -1,14 +1,10 @@
-import { items } from "../game/items";
-
 export const generateRoomItemsDescription = (
 	roomDesc: string,
-	roomItems: string[]
+	roomItems: Item[]
 ) => {
 	let description = roomDesc + "\n";
 
-	roomItems.forEach(
-		(item: string) => (description += items[item].briefDescription + "\n")
-	);
+	roomItems.map((item) => (description += item.briefDescription + "\n"));
 
 	return description;
 };

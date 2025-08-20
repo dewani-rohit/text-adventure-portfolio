@@ -29,19 +29,29 @@ const findCommand = (input: string) => {
 };
 
 const parseInput = (input: string) => {
-	const normalizedInput = input.trim().toLowerCase();
+	let normalizedInput = input.trim().toLowerCase();
+
+	normalizedInput = normalizedInput
+		.split(" ")
+		.filter((word) => !["the", "a", "an"].includes(word))
+		.join(" ");
 
 	const [action, ...rest] = normalizedInput.split(" ");
 	const target = rest.join(" ");
 
-	return { normalizedInput, action, target };
+	return { input, normalizedInput, action, target };
 };
 
 export const processCommand = (input: string) => {
-	const { normalizedInput, action, target } = parseInput(input);
+	const {
+		input: userInput,
+		normalizedInput,
+		action,
+		target,
+	} = parseInput(input);
 	const context = useGameStore.getState();
 
-	context.addLine(`> ${normalizedInput}`, "player");
+	context.addLine(`> ${userInput}`, "player");
 
 	if (!normalizedInput) {
 		const response =

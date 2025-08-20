@@ -7,8 +7,12 @@ import { coffeeMachine } from "./items/coffeeMachine";
 import { clock } from "./items/clock";
 import { fridge } from "./items/fridge";
 
-const INITIAL_ROOM_ITEMS: { [roomId: string]: string[] } = {
-	lobby: [coffeeMachine.id, clock.id, fridge.id],
+const INITIAL_ROOM_ITEMS: { [roomId: string]: Item[] } = {
+	lobby: [coffeeMachine, clock, fridge],
+};
+
+const INITIAL_FLAGS: { [flag: string]: boolean | number } = {
+	isFridgeOpen: false,
 };
 
 const initializeGameState = () => ({
@@ -16,6 +20,7 @@ const initializeGameState = () => ({
 	currentRoom: "lobby",
 	previousRoom: null,
 	roomItems: INITIAL_ROOM_ITEMS,
+	gameFlags: INITIAL_FLAGS,
 });
 
 export const useGameStore = create<GameStore>()(
@@ -56,6 +61,11 @@ export const useGameStore = create<GameStore>()(
 					get().addLine(`\n[${room.name}]\n${description}`);
 				}
 			},
+
+			setFlag: (flag, value) =>
+				set((state) => ({
+					gameFlags: { ...state.gameFlags, [flag]: value },
+				})),
 		}),
 		{
 			name: "game-session",

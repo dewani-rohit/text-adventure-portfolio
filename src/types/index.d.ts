@@ -21,7 +21,8 @@ interface GameState {
 	history: HistoryLine[];
 	currentRoom: string;
 	previousRoom: string | null;
-	roomItems: { [roomId: string]: string[] };
+	roomItems: { [roomId: string]: Item[] };
+	gameFlags: { [key: string]: boolean | number };
 }
 
 interface GameActions {
@@ -29,6 +30,7 @@ interface GameActions {
 	restartGame: () => void;
 	addLine: (text: string, role?: "system" | "player") => void;
 	setCurrentRoom: (roomId: string) => void;
+	setFlag: (flag: string, value: boolean | number) => void;
 }
 
 type GameStore = GameState & GameActions;

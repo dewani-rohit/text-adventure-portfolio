@@ -1,6 +1,7 @@
 export const helpResponse = `Available commands:
 • help - Displays the catalogue of sanctioned commands (because apparently intuition isn't enough).
-• look - Survey your surroundings in detail.`;
+• look - Survey your surroundings in detail.
+• inspect [object] - Examine something thoroughly (or at least pretend you are).`;
 
 export const blankResponses = [
 	"Input not detected. Silence may be profound, but it is also unproductive.",
@@ -24,4 +25,25 @@ export const unknownResponses = [
 	"Instruction unrecognized. A command from an alternate manual, perhaps?",
 	"Remarkable. You have discovered a command known only to absolutely no one.",
 	"The archives applaud your imagination. They do not, however, obey it.",
+];
+
+export const badInspectResponses = [
+	"You look, and you look hard. Sadly, nothing resembling that is here.",
+	"Ah, the art of staring at things that do not exist. A bold choice.",
+	"If such a thing were present, I'd have gladly described it for you. Alas, it is not.",
+	"You attempt to observe it, but reality fails to cooperate.",
+];
+
+export const badOpenResponses = (target: string) => [
+	`Opening ${target} is not possible. It simply isn't here.`,
+	`You cannot open ${target}... mainly because it in not in this room.`,
+	`Opening ${target}? Charming idea. Reality disagrees — it isn't here.`,
+	`Attempting to open ${target} proves futile. It's not here.`,
+];
+
+export const badCloseResponses = (target: string) => [
+	`Close ${target}? But it isn't even here.`,
+	`Closing ${target} is ambitious as it is not present here.`,
+	`You reach, you strain... but ${target} is not present in the room`,
+	`You cannot close ${target}... mainly because it is not in the room.`,
 ];
