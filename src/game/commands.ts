@@ -1,6 +1,7 @@
 import {
 	badInspectResponses,
 	badOpenResponses,
+	badUseResponses,
 	helpResponse,
 } from "../constants";
 import { generateRoomItemsDescription } from "../utils";
@@ -83,7 +84,9 @@ const handleInspect = (target: string, context: GameStore) => {
 		return;
 	}
 
-	const itemInGame = Object.values(items).some((item) => item.name === target);
+	const itemInGame = Object.values(items).some(
+		(item) => item.name === target || item.aliases?.includes(target)
+	);
 
 	if (!itemInGame) {
 		let regex = /\s+[a-zA-Z]+\s+\w+/.test(target);
@@ -106,8 +109,13 @@ const handleInspect = (target: string, context: GameStore) => {
 	const roomItems = context.roomItems[room.id];
 
 	const itemInRoom = roomItems.find((item) => item.name === target);
+	const itemInInventory = context.inventory.find(
+		(item) => item.name === target || item.aliases?.includes(target)
+	);
 
-	if (!itemInRoom) {
+	const object = itemInRoom || itemInInventory;
+
+	if (!object) {
 		const response =
 			badInspectResponses[
 				Math.floor(Math.random() * badInspectResponses.length)
@@ -116,7 +124,7 @@ const handleInspect = (target: string, context: GameStore) => {
 		return;
 	}
 
-	context.addLine(itemInRoom.detailedDescription);
+	context.addLine(object.detailedDescription);
 };
 
 const handleOpen = (target: string, context: GameStore) => {
@@ -133,7 +141,9 @@ const handleOpen = (target: string, context: GameStore) => {
 		return;
 	}
 
-	const itemInGame = Object.values(items).some((item) => item.name === target);
+	const itemInGame = Object.values(items).some(
+		(item) => item.name === target || item.aliases?.includes(target)
+	);
 
 	if (!itemInGame) {
 		let regex = /\s+[a-zA-Z]+\s+\w+/.test(target);
@@ -173,15 +183,40 @@ const handleOpen = (target: string, context: GameStore) => {
 		return;
 	}
 
-	if (context.gameFlags["isFridgeOpen"]) {
-		context.addLine(
-			"Fridge door was already ajar. There are 3 delicious cornettos stacked in here."
-		);
+	const isFridgeOpen = context.gameFlags["isFridgeOpen"];
+	const cornettosInFridge = context.gameFlags["cornettosInFridge"] as number;
+
+	if (isFridgeOpen) {
+		const iceCreamString = `Fridge door was already ajar. ${
+			cornettosInFridge === 0
+				? "It offers nothing but cold air and existential disappointment."
+				: `Inside, ${
+						cornettosInFridge === 3
+							? "three cornettos await"
+							: cornettosInFridge === 2
+							? "two cornettos await"
+							: "a single cornetto awaits"
+				  }.`
+		}`;
+
+		context.addLine(iceCreamString);
 		return;
 	}
 
 	context.setFlag("isFridgeOpen", true);
-	context.addLine("You open the fridge. Behold: 3 cornettos.");
+
+	const iceCreamString = `You open the fridge. ${
+		cornettosInFridge === 0
+			? "It offers nothing but cold air and existential disappointment."
+			: `A faint chill escapes. Inside, ${
+					cornettosInFridge === 3
+						? "three cornettos await"
+						: cornettosInFridge === 2
+						? "two cornettos await"
+						: "a single cornetto awaits"
+			  }.`
+	}`;
+	context.addLine(iceCreamString);
 };
 
 const handleClose = (target: string, context: GameStore) => {
@@ -192,7 +227,9 @@ const handleClose = (target: string, context: GameStore) => {
 		return;
 	}
 
-	const itemInGame = Object.values(items).some((item) => item.name === target);
+	const itemInGame = Object.values(items).some(
+		(item) => item.name === target || item.aliases?.includes(target)
+	);
 
 	if (!itemInGame) {
 		let regex = /\s+[a-zA-Z]+\s+\w+/.test(target);
@@ -227,8 +264,67 @@ const handleClose = (target: string, context: GameStore) => {
 
 	context.setFlag("isFridgeOpen", false);
 	context.addLine(
-		"The fridge door clicks shut, enclosing its precious cornettos like tiny, frozen treasures."
+		"You close the fridge. It resumes its low, self-important hum."
 	);
+};
+
+const handleUse = (target: string, context: GameStore) => {
+	if (!target) {
+		context.addLine(
+			"Use what? Your imagination? Your degree? Your crippling social anxiety? Please specify."
+		);
+		return;
+	}
+
+	if (target === "room") {
+		context.addLine(
+			`Ah, yes. You attempt to "use" the room. Congratulations, you are already using it by standing in it.`
+		);
+		return;
+	}
+
+	const itemInGame = Object.values(items).some(
+		(item) => item.name === target || item.aliases?.includes(target)
+	);
+
+	if (!itemInGame) {
+		let regex = /\s+[a-zA-Z]+\s+\w+/.test(target);
+		if (target.split(" ").length >= 2) {
+			regex = /\s+([a-zA-Z]+(?:\s+[a-zA-Z]+)*)/.test(target);
+		}
+
+		if (regex) {
+			context.addLine(
+				"Alas, something about that input escapes comprehension."
+			);
+			return;
+		}
+
+		context.addLine(`I do not know what "${target}" is.`);
+		return;
+	}
+
+	const room = rooms[context.currentRoom];
+	const roomItems = context.roomItems[room.id];
+
+	const itemInRoom = roomItems.find((item) => item.name === target);
+	const itemInInventory = context.inventory.find(
+		(item) => item.name === target || item.aliases?.includes(target)
+	);
+
+	const object = itemInRoom || itemInInventory;
+
+	if (!object) {
+		const response =
+			badUseResponses(target)[
+				Math.floor(Math.random() * badUseResponses(target).length)
+			];
+
+		context.addLine(response);
+		return;
+	}
+
+	object.use();
 };
 
 export const commands: CommandDefinition[] = [
@@ -258,5 +354,10 @@ export const commands: CommandDefinition[] = [
 	{
 		name: "close",
 		execute: handleClose,
+	},
+	{
+		name: "use",
+		aliases: ["u"],
+		execute: handleUse,
 	},
 ];

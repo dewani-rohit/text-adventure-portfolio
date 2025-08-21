@@ -13,8 +13,13 @@ interface Room {
 interface Item {
 	id: string;
 	name: string;
+	aliases?: string[];
 	briefDescription: string;
 	detailedDescription: string;
+	use: () => void;
+	usesLeft?: number;
+	eatable?: boolean;
+	drinkable?: boolean;
 }
 
 interface GameState {
@@ -23,6 +28,7 @@ interface GameState {
 	previousRoom: string | null;
 	roomItems: { [roomId: string]: Item[] };
 	gameFlags: { [key: string]: boolean | number };
+	inventory: Item[];
 }
 
 interface GameActions {
@@ -31,6 +37,9 @@ interface GameActions {
 	addLine: (text: string, role?: "system" | "player") => void;
 	setCurrentRoom: (roomId: string) => void;
 	setFlag: (flag: string, value: boolean | number) => void;
+	addToInventory: (item: Item) => void;
+	removeFromInventory: (item: Item) => void;
+	updateInventoryItem: (id: string, updates: Partial<Item>) => void;
 }
 
 type GameStore = GameState & GameActions;

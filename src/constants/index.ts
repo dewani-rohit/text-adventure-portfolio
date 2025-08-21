@@ -1,7 +1,8 @@
 export const helpResponse = `Available commands:
 • help - Displays the catalogue of sanctioned commands (because apparently intuition isn't enough).
 • look - Survey your surroundings in detail.
-• inspect [object] - Examine something thoroughly (or at least pretend you are).`;
+• inspect [object] - Examine something thoroughly (or at least pretend you are).
+• use [object] - Attempts to interact with the object.`;
 
 export const blankResponses = [
 	"Input not detected. Silence may be profound, but it is also unproductive.",
@@ -46,4 +47,11 @@ export const badCloseResponses = (target: string) => [
 	`Closing ${target} is ambitious as it is not present here.`,
 	`You reach, you strain... but ${target} is not present in the room`,
 	`You cannot close ${target}... mainly because it is not in the room.`,
+];
+
+export const badUseResponses = (target: string) => [
+	`A noble attempt. Sadly, ${target} is not in here.`,
+	`You look around. No ${target}. Just you, the room, and your questionable choices`,
+	`You attempt using ${target}. It would help if ${target} were actually here.`,
+	`An inspiring idea — employing ${target} where it does not exist.`,
 ];

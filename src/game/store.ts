@@ -13,6 +13,8 @@ const INITIAL_ROOM_ITEMS: { [roomId: string]: Item[] } = {
 
 const INITIAL_FLAGS: { [flag: string]: boolean | number } = {
 	isFridgeOpen: false,
+	cornettosInFridge: 3,
+	cornettosConsumed: 0,
 };
 
 const initializeGameState = () => ({
@@ -21,6 +23,7 @@ const initializeGameState = () => ({
 	previousRoom: null,
 	roomItems: INITIAL_ROOM_ITEMS,
 	gameFlags: INITIAL_FLAGS,
+	inventory: [],
 });
 
 export const useGameStore = create<GameStore>()(
@@ -65,6 +68,23 @@ export const useGameStore = create<GameStore>()(
 			setFlag: (flag, value) =>
 				set((state) => ({
 					gameFlags: { ...state.gameFlags, [flag]: value },
+				})),
+
+			addToInventory: (item) =>
+				set((state) => ({
+					inventory: [...state.inventory, item],
+				})),
+
+			removeFromInventory: (item) =>
+				set((state) => ({
+					inventory: state.inventory.filter((i) => i.id !== item.id),
+				})),
+
+			updateInventoryItem: (itemId, updates) =>
+				set((state) => ({
+					inventory: state.inventory.map((i) =>
+						i.id === itemId ? { ...i, ...updates } : i
+					),
 				})),
 		}),
 		{
