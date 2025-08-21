@@ -8,11 +8,18 @@ const useClock = () => {
 	);
 };
 
+const useInspectClock = () => {
+	const { addLine } = useGameStore.getState();
+
+	addLine(
+		"The clock's face is pristine, yet unmoving. Its hands rest stubbornly at 10:04, as though time itself found this moment satisfactory and chose never to leave it."
+	);
+};
+
 export const clock: Item = {
 	id: "clock",
 	name: "clock",
-	briefDescription: "There is a wall clock hanging just above eye level.",
-	detailedDescription:
-		"The clock's face is pristine, yet unmoving. Its hands rest stubbornly at 10:04, as though time itself found this moment satisfactory and chose never to leave it.",
+	describeItem: "There is a wall clock hanging just above eye level.",
+	inspectItem: useInspectClock,
 	use: useClock,
 };

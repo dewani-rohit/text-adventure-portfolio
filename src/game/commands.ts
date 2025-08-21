@@ -4,25 +4,30 @@ import {
 	badUseResponses,
 	helpResponse,
 } from "../constants";
-import { generateRoomItemsDescription } from "../utils";
-import { items } from "./items";
+import {
+	findItem,
+	generateRoomItemsDescription,
+	getFridgeMessage,
+	validateItemExists,
+	validateTarget,
+} from "../utils";
 import { rooms } from "./rooms";
 
 const handleHelp = (target: string, context: GameStore) => {
-	if (target && target !== "me") {
-		context.addLine("Alas, something about that input escapes comprehension.");
+	const error = validateTarget(target, "me");
+	if (error) {
+		context.addLine(error);
 		return;
 	}
-
 	context.addLine(helpResponse);
 };
 
 const handleRestart = (target: string, context: GameStore) => {
-	if (target && target !== "game") {
-		context.addLine("Alas, something about that input escapes comprehension.");
+	const error = validateTarget(target, "game");
+	if (error) {
+		context.addLine(error);
 		return;
 	}
-
 	context.restartGame();
 };
 
@@ -32,19 +37,13 @@ const handleLook = (target: string, context: GameStore) => {
 		const objectName = rest.join(" ");
 
 		if (!objectName) {
-			let response = "";
+			const responses: Record<string, string> = {
+				in: "You take a moment to peer into yourself. The results are inconclusive.",
+				at: "At... what, precisely? A little specificity would be delightful.",
+				out: "Look out! â€¦Ah. False alarm. Carry on.",
+			};
 
-			if (preposition === "in")
-				response =
-					"You take a moment to peer into yourself. The results are inconclusive.";
-
-			if (preposition === "at")
-				response =
-					"At... what, precisely? A little specificity would be delightful.";
-
-			if (preposition === "out")
-				response = "Look out! …Ah. False alarm. Carry on.";
-
+			const response = responses[preposition] || "";
 			context.addLine(response);
 		} else {
 			if (preposition === "at") {
@@ -65,9 +64,7 @@ const handleLook = (target: string, context: GameStore) => {
 	const room = rooms[context.currentRoom];
 	const roomDesc = room.detailedDescription;
 	const roomItems = context.roomItems[room.id];
-
 	const description = generateRoomItemsDescription(roomDesc, roomItems);
-
 	context.addLine(description);
 };
 
@@ -84,37 +81,13 @@ const handleInspect = (target: string, context: GameStore) => {
 		return;
 	}
 
-	const itemInGame = Object.values(items).some(
-		(item) => item.name === target || item.aliases?.includes(target)
-	);
-
-	if (!itemInGame) {
-		let regex = /\s+[a-zA-Z]+\s+\w+/.test(target);
-		if (target.split(" ").length >= 2) {
-			regex = /\s+([a-zA-Z]+(?:\s+[a-zA-Z]+)*)/.test(target);
-		}
-
-		if (regex) {
-			context.addLine(
-				"Alas, something about that input escapes comprehension."
-			);
-			return;
-		}
-
-		context.addLine(`I do not know what "${target}" is.`);
+	const error = validateItemExists(target);
+	if (error) {
+		context.addLine(error);
 		return;
 	}
 
-	const room = rooms[context.currentRoom];
-	const roomItems = context.roomItems[room.id];
-
-	const itemInRoom = roomItems.find((item) => item.name === target);
-	const itemInInventory = context.inventory.find(
-		(item) => item.name === target || item.aliases?.includes(target)
-	);
-
-	const object = itemInRoom || itemInInventory;
-
+	const object = findItem(target, context);
 	if (!object) {
 		const response =
 			badInspectResponses[
@@ -124,7 +97,7 @@ const handleInspect = (target: string, context: GameStore) => {
 		return;
 	}
 
-	context.addLine(object.detailedDescription);
+	object.inspectItem();
 };
 
 const handleOpen = (target: string, context: GameStore) => {
@@ -132,7 +105,6 @@ const handleOpen = (target: string, context: GameStore) => {
 		context.addLine(
 			"Open what? The possibilities are endless... but you need to pick one."
 		);
-
 		return;
 	}
 
@@ -141,30 +113,14 @@ const handleOpen = (target: string, context: GameStore) => {
 		return;
 	}
 
-	const itemInGame = Object.values(items).some(
-		(item) => item.name === target || item.aliases?.includes(target)
-	);
-
-	if (!itemInGame) {
-		let regex = /\s+[a-zA-Z]+\s+\w+/.test(target);
-		if (target.split(" ").length >= 2) {
-			regex = /\s+([a-zA-Z]+(?:\s+[a-zA-Z]+)*)/.test(target);
-		}
-
-		if (regex) {
-			context.addLine(
-				"Alas, something about that input escapes comprehension."
-			);
-			return;
-		}
-
-		context.addLine(`I do not know what "${target}" is.`);
+	const error = validateItemExists(target);
+	if (error) {
+		context.addLine(error);
 		return;
 	}
 
 	const room = rooms[context.currentRoom];
 	const roomItems = context.roomItems[room.id];
-
 	const itemInRoom = roomItems.find((item) => item.name === target);
 
 	if (!itemInRoom) {
@@ -187,36 +143,19 @@ const handleOpen = (target: string, context: GameStore) => {
 	const cornettosInFridge = context.gameFlags["cornettosInFridge"] as number;
 
 	if (isFridgeOpen) {
-		const iceCreamString = `Fridge door was already ajar. ${
-			cornettosInFridge === 0
-				? "It offers nothing but cold air and existential disappointment."
-				: `Inside, ${
-						cornettosInFridge === 3
-							? "three cornettos await"
-							: cornettosInFridge === 2
-							? "two cornettos await"
-							: "a single cornetto awaits"
-				  }.`
-		}`;
-
-		context.addLine(iceCreamString);
+		const message = `Fridge door was already ajar. ${getFridgeMessage(
+			cornettosInFridge
+		)}`;
+		context.addLine(message);
 		return;
 	}
 
 	context.setFlag("isFridgeOpen", true);
-
-	const iceCreamString = `You open the fridge. ${
-		cornettosInFridge === 0
-			? "It offers nothing but cold air and existential disappointment."
-			: `A faint chill escapes. Inside, ${
-					cornettosInFridge === 3
-						? "three cornettos await"
-						: cornettosInFridge === 2
-						? "two cornettos await"
-						: "a single cornetto awaits"
-			  }.`
-	}`;
-	context.addLine(iceCreamString);
+	const message = `You open the fridge. ${getFridgeMessage(
+		cornettosInFridge,
+		true
+	)}`;
+	context.addLine(message);
 };
 
 const handleClose = (target: string, context: GameStore) => {
@@ -227,24 +166,9 @@ const handleClose = (target: string, context: GameStore) => {
 		return;
 	}
 
-	const itemInGame = Object.values(items).some(
-		(item) => item.name === target || item.aliases?.includes(target)
-	);
-
-	if (!itemInGame) {
-		let regex = /\s+[a-zA-Z]+\s+\w+/.test(target);
-		if (target.split(" ").length >= 2) {
-			regex = /\s+([a-zA-Z]+(?:\s+[a-zA-Z]+)*)/.test(target);
-		}
-
-		if (regex) {
-			context.addLine(
-				"Alas, something about that input escapes comprehension."
-			);
-			return;
-		}
-
-		context.addLine(`I do not know what "${target}" is.`);
+	const error = validateItemExists(target);
+	if (error) {
+		context.addLine(error);
 		return;
 	}
 
@@ -283,43 +207,18 @@ const handleUse = (target: string, context: GameStore) => {
 		return;
 	}
 
-	const itemInGame = Object.values(items).some(
-		(item) => item.name === target || item.aliases?.includes(target)
-	);
-
-	if (!itemInGame) {
-		let regex = /\s+[a-zA-Z]+\s+\w+/.test(target);
-		if (target.split(" ").length >= 2) {
-			regex = /\s+([a-zA-Z]+(?:\s+[a-zA-Z]+)*)/.test(target);
-		}
-
-		if (regex) {
-			context.addLine(
-				"Alas, something about that input escapes comprehension."
-			);
-			return;
-		}
-
-		context.addLine(`I do not know what "${target}" is.`);
+	const error = validateItemExists(target);
+	if (error) {
+		context.addLine(error);
 		return;
 	}
 
-	const room = rooms[context.currentRoom];
-	const roomItems = context.roomItems[room.id];
-
-	const itemInRoom = roomItems.find((item) => item.name === target);
-	const itemInInventory = context.inventory.find(
-		(item) => item.name === target || item.aliases?.includes(target)
-	);
-
-	const object = itemInRoom || itemInInventory;
-
+	const object = findItem(target, context);
 	if (!object) {
 		const response =
 			badUseResponses(target)[
 				Math.floor(Math.random() * badUseResponses(target).length)
 			];
-
 		context.addLine(response);
 		return;
 	}

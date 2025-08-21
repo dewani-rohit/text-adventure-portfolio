@@ -1,3 +1,4 @@
+import { getFridgeMessage } from "../../utils";
 import { useGameStore } from "../store";
 
 const useFridge = () => {
@@ -13,30 +14,39 @@ const useFridge = () => {
 		return;
 	}
 
-	const iceCreamString = `You open the fridge. ${
-		cornettosInFridge === 0
-			? "It offers nothing but cold air and existential disappointment."
-			: `A faint chill escapes. Inside, ${
-					cornettosInFridge === 3
-						? "three cornettos await"
-						: cornettosInFridge === 2
-						? "two cornettos await"
-						: "a single cornetto awaits"
-			  }.`
-	}`;
+	const message = `You open the fridge. ${getFridgeMessage(
+		cornettosInFridge,
+		true
+	)}`;
 
-	addLine(iceCreamString);
+	addLine(message);
 
 	setFlag("isFridgeOpen", true);
+};
+
+const useInspectFridge = () => {
+	const { addLine, gameFlags } = useGameStore.getState();
+
+	const isFridgeOpen = gameFlags["isFridgeOpen"];
+
+	if (isFridgeOpen) {
+		addLine(
+			"The refrigerator stands solid and unassuming, its door swung wide. A faint draft drifts out, the chill air escaping with quiet indifference to your intrusion."
+		);
+		return;
+	}
+
+	addLine(
+		"The refrigerator stands solid and unassuming, its handle cool and slightly worn."
+	);
+	return;
 };
 
 export const fridge: Item = {
 	id: "fridge",
 	name: "fridge",
-	// TODO: change desc of fridge depending on open status
-	briefDescription:
+	describeItem:
 		"A modest refrigerator rests against the wall, its smooth surface reflecting the room's faint light.",
-	detailedDescription:
-		"The refrigerator stands solid and unassuming, its handle cool and slightly worn. A faint draft escapes when you tug the seal, carrying with it the quiet promise of whatever lies inside.",
+	inspectItem: useInspectFridge,
 	use: useFridge,
 };

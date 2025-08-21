@@ -1,37 +1,24 @@
 const Header = () => {
 	return (
 		<section className="mb-10 text-muted px-5">
-			<pre className="hidden sm:block text-accent text-xs">
+			<pre className="text-accent text-[0.5rem]">
 				{String.raw`
 
-______      _     _ _    ______                         _ 
-| ___ \    | |   (_) |   |  _  \                       (_)
-| |_/ /___ | |__  _| |_  | | | |_____      ____ _ _ __  _ 
-|    // _ \| '_ \| | __| | | | / _ \ \ /\ / / _' | '_ \| |
-| |\ \ (_) | | | | | |_  | |/ /  __/\ V  V / (_| | | | | |
-\_| \_\___/|_| |_|_|\__| |___/ \___| \_/\_/ \__,_|_| |_|_|
+██████   ██████  ██   ██ ██ ████████     ██████  ███████ ██     ██  █████  ███    ██ ██ 
+██   ██ ██    ██ ██   ██ ██    ██        ██   ██ ██      ██     ██ ██   ██ ████   ██ ██ 
+██████  ██    ██ ███████ ██    ██        ██   ██ █████   ██  █  ██ ███████ ██ ██  ██ ██ 
+██   ██ ██    ██ ██   ██ ██    ██        ██   ██ ██      ██ ███ ██ ██   ██ ██  ██ ██ ██ 
+██   ██  ██████  ██   ██ ██    ██        ██████  ███████  ███ ███  ██   ██ ██   ████ ██
         `}
 			</pre>
 
-			<pre className="block sm:hidden text-accent text-xs">
-				{String.raw`
-				
-______      _     _ _    ______
-| ___ \    | |   (_) |   |  _  \
-| |_/ /___ | |__  _| |_  | | | |
-|    // _ \| '_ \| | __| | | | /
-| |\ \ (_) | | | | | |_  | |/ /
-\_| \_\___/|_| |_|_|\__| |___/
-        `}
-			</pre>
-
-			<div>
-				<p className="mb-4">
+			<div className="text-sm">
+				<p className="mb-2">
 					Ah, a new visitor. I am Expositron 3000, certified Narration Unit,
 					assigned to guide you through this world.
 				</p>
 
-				<p className="mb-4">
+				<p className="mb-2">
 					If you prefer a less adventurous format, you may instead visit{" "}
 					<a
 						href={import.meta.env.VITE_PORTFOLIO_SITE_URL}

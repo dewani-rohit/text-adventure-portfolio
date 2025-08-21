@@ -39,13 +39,19 @@ const useCoffee = () => {
 	updateInventoryItem(coffee.id, { usesLeft: newUses });
 };
 
+const useInspectCoffee = () => {
+	const { addLine } = useGameStore.getState();
+	addLine(
+		"You look at the cup you hold. A brew so well executed it makes you question every cup you've tolerated before. Notes of chocolate, citrus, and smug superiority."
+	);
+};
+
 export const coffee: Item = {
 	id: "coffee",
 	name: "coffee",
-	briefDescription:
+	describeItem:
 		"There is a damn fine cup of coffee. Black as midnight on a moonless night.",
-	detailedDescription:
-		"You look at the cup you hold. A brew so well executed it makes you question every cup you've tolerated before. Notes of chocolate, citrus, and smug superiority.",
+	inspectItem: useInspectCoffee,
 	use: useCoffee,
 	usesLeft: 3,
 	drinkable: true,

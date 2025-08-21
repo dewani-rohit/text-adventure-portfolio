@@ -14,8 +14,8 @@ interface Item {
 	id: string;
 	name: string;
 	aliases?: string[];
-	briefDescription: string;
-	detailedDescription: string;
+	describeItem: string;
+	inspectItem: () => void;
 	use: () => void;
 	usesLeft?: number;
 	eatable?: boolean;

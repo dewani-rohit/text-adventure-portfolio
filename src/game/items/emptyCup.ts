@@ -8,12 +8,18 @@ const useCup = () => {
 	);
 };
 
+const useInspectCup = () => {
+	const { addLine } = useGameStore.getState();
+	addLine(
+		"You look into the cup. No warmth, no aroma, just vacant porcelain. Coffee as absent as the moon on a moonless night."
+	);
+};
+
 export const emptyCup: Item = {
 	id: "emptyCup",
 	name: "empty cup",
 	aliases: ["cup"],
-	briefDescription: "An empty cup — a vessel yearning for purpose.",
-	detailedDescription:
-		"You look into the cup. No warmth, no aroma, just vacant porcelain. Coffee as absent as the moon on a moonless night.",
+	describeItem: "An empty cup — a vessel yearning for purpose.",
+	inspectItem: useInspectCup,
 	use: useCup,
 };

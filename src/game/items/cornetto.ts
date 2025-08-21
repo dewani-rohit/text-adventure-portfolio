@@ -1,3 +1,4 @@
+import { badInspectResponses } from "../../constants";
 import { useGameStore } from "../store";
 
 const useCornetto = () => {
@@ -47,14 +48,46 @@ const useCornetto = () => {
 	if (cornetto && cornettoUsesLeft <= 0) removeFromInventory(cornetto);
 };
 
+const useInspectCornetto = () => {
+	const { addLine, inventory, currentRoom, gameFlags } =
+		useGameStore.getState();
+
+	const isInInventory = inventory.some((i) => i.name === "cornetto");
+
+	if (!isInInventory) {
+		const isInLobby = currentRoom === "lobby";
+
+		if (!isInLobby) {
+			const response =
+				badInspectResponses[
+					Math.floor(Math.random() * badInspectResponses.length)
+				];
+			addLine(response);
+
+			return;
+		}
+
+		const isFridgeOpen = gameFlags["isFridgeOpen"];
+
+		if (!isFridgeOpen) {
+			addLine(
+				"You squint at the fridge door, as though sheer force of will might grant you x-ray vision. Alas, the Cornetto remains out of sight."
+			);
+			return;
+		}
+	}
+
+	addLine(
+		"Cornetto... a fragile alliance of wafer, ice cream, and chocolate tip, holding together out of sheer optimism. Some whisper it doubles as a hangover cure. Others just eat it before it melts."
+	);
+};
+
 export const cornetto: Item = {
 	id: "cornetto",
 	name: "cornetto",
 	aliases: ["ice cream", "ice-cream", "icecream"],
-	briefDescription: "A Cornetto. The simplest of frozen consolations.",
-	// TODO: handle inspection
-	detailedDescription:
-		"You regard the Cornetto. A fragile alliance of wafer, ice cream, and chocolate tip, holding together out of sheer optimism. Some whisper it doubles as a hangover cure. Others just eat it before it melts.",
+	describeItem: "A Cornetto. The simplest of frozen consolations.",
+	inspectItem: useInspectCornetto,
 	use: useCornetto,
 	eatable: true,
 	usesLeft: 1,
