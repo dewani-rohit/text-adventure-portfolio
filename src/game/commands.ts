@@ -352,6 +352,88 @@ const handleShowInventory = (target: string, context: GameStore) => {
 	context.addLine(response);
 };
 
+const handleConsume = (target: string, context: GameStore) => {
+	if (!target) {
+		context.addLine(
+			"An admirable instinct, but you'll need an object to devour, not just the concept of gluttony."
+		);
+		return;
+	}
+
+	if (target === "room") {
+		context.addLine(
+			"Chewing drywall is not a recognized dietary choice, no matter how committed you look."
+		);
+		return;
+	}
+
+	const error = validateItemExists(target);
+	if (error) {
+		context.addLine(error);
+		return;
+	}
+
+	const object = findItem(target, context);
+	if (!object) {
+		const response =
+			badTakeResponses(target)[
+				Math.floor(Math.random() * badTakeResponses(target).length)
+			];
+		context.addLine(response);
+		return;
+	}
+
+	if (!object.eatable && !object.drinkable) {
+		context.addLine(
+			"Not everything in reach is a snack, despite your enthusiasm."
+		);
+		return;
+	}
+
+	object.use();
+};
+
+const handleEat = (target: string, context: GameStore) => {
+	if (!target) {
+		context.addLine("Hunger is clear, intent is not.");
+		return;
+	}
+
+	const object = findItem(target, context);
+	if (object && object.drinkable && !object.eatable) {
+		context.addLine(
+			"Yes, because gnawing on liquid has always worked out great for everyone involved."
+		);
+		return;
+	}
+
+	handleConsume(target, context);
+};
+
+const handleDrink = (target: string, context: GameStore) => {
+	if (!target) {
+		context.addLine(
+			"Refreshing! If only there had been an actual beverage involved."
+		);
+		return;
+	}
+
+	if (target === "room") {
+		context.addLine(
+			"Unless the room has been juiced lately, nothing's going to happen."
+		);
+		return;
+	}
+
+	const object = findItem(target, context);
+	if (object && !object.drinkable && object.eatable) {
+		context.addLine("Not everything in the world is conveniently liquid.");
+		return;
+	}
+
+	handleConsume(target, context);
+};
+
 export const commands: CommandDefinition[] = [
 	{
 		name: "help",
@@ -400,5 +482,17 @@ export const commands: CommandDefinition[] = [
 		aliases: ["i", "bag"],
 		execute: handleShowInventory,
 	},
-	// TODO: make, drink, and consume for consumables
+	{
+		name: "consume",
+		execute: handleConsume,
+	},
+	{
+		name: "eat",
+		execute: handleEat,
+	},
+	{
+		name: "drink",
+		aliases: ["sip", "slurp"],
+		execute: handleDrink,
+	},
 ];
