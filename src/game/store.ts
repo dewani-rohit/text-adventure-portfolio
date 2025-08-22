@@ -75,10 +75,17 @@ export const useGameStore = create<GameStore>()(
 					inventory: [...state.inventory, item],
 				})),
 
-			removeFromInventory: (item) =>
+			removeFromInventory: (item) => {
+				const indexToRemove = get().inventory.findIndex(
+					(i) => i.id === item.id
+				);
+
 				set((state) => ({
-					inventory: state.inventory.filter((i) => i.id !== item.id),
-				})),
+					inventory: state.inventory.filter(
+						(_, index) => index !== indexToRemove
+					),
+				}));
+			},
 
 			updateInventoryItem: (itemId, updates) =>
 				set((state) => ({
@@ -86,6 +93,29 @@ export const useGameStore = create<GameStore>()(
 						i.id === itemId ? { ...i, ...updates } : i
 					),
 				})),
+
+			moveItemToRoom: (item, roomId) =>
+				set((state) => ({
+					roomItems: {
+						...state.roomItems,
+						[roomId]: [...(state.roomItems[roomId] || []), item],
+					},
+				})),
+
+			removeItemFromRoom: (item, roomId) => {
+				const indexToRemove = get().roomItems[roomId].findIndex(
+					(i) => i.id === item.id
+				);
+
+				set((state) => ({
+					roomItems: {
+						...state.roomItems,
+						[roomId]: (state.roomItems[roomId] || []).filter(
+							(_, index) => index !== indexToRemove
+						),
+					},
+				}));
+			},
 		}),
 		{
 			name: "game-session",

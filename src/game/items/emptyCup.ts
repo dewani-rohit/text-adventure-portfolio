@@ -15,11 +15,34 @@ const useInspectCup = () => {
 	);
 };
 
+const useTakeCup = () => {
+	const { addToInventory, addLine, removeItemFromRoom, currentRoom } =
+		useGameStore.getState();
+
+	removeItemFromRoom(emptyCup, currentRoom);
+	addToInventory(emptyCup);
+	addLine(
+		"You now have a cup. Empty for now, awaiting to be filled with joy and jitter."
+	);
+};
+
+const useDropCup = () => {
+	const { removeFromInventory, addLine, moveItemToRoom, currentRoom } =
+		useGameStore.getState();
+
+	removeFromInventory(emptyCup);
+	moveItemToRoom(emptyCup, currentRoom);
+	addLine("You place the cup down. Still empty, still waiting.");
+};
+
 export const emptyCup: Item = {
 	id: "emptyCup",
 	name: "empty cup",
 	aliases: ["cup"],
-	describeItem: "An empty cup — a vessel yearning for purpose.",
+	describeItem: "You also see an empty cup — a vessel yearning for purpose.",
 	inspectItem: useInspectCup,
 	use: useCup,
+	portable: true,
+	take: useTakeCup,
+	drop: useDropCup,
 };

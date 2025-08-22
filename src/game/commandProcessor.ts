@@ -16,8 +16,6 @@ const createCommandMaps = (commands: CommandDefinition[]) => {
 	return { commandMap, aliasMap };
 };
 
-// const createCommandProcessor = () => {
-
 const findCommand = (input: string) => {
 	const { commandMap, aliasMap } = createCommandMaps(commands);
 
@@ -35,6 +33,13 @@ const parseInput = (input: string) => {
 		.split(" ")
 		.filter((word) => !["the", "a", "an"].includes(word))
 		.join(" ");
+
+	if (normalizedInput.startsWith("pick up")) {
+		const action = "pick up";
+		const target = normalizedInput.split(" ").slice(2).join(" ");
+		console.log({ action, target });
+		return { input, normalizedInput, action, target };
+	}
 
 	const [action, ...rest] = normalizedInput.split(" ");
 	const target = rest.join(" ");
@@ -71,4 +76,3 @@ export const processCommand = (input: string) => {
 
 	command.execute(target, context);
 };
-// };

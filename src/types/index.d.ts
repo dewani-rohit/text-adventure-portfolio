@@ -17,6 +17,9 @@ interface Item {
 	describeItem: string;
 	inspectItem: () => void;
 	use: () => void;
+	take?: () => void;
+	drop?: () => void;
+	portable: boolean;
 	usesLeft?: number;
 	eatable?: boolean;
 	drinkable?: boolean;
@@ -40,6 +43,8 @@ interface GameActions {
 	addToInventory: (item: Item) => void;
 	removeFromInventory: (item: Item) => void;
 	updateInventoryItem: (id: string, updates: Partial<Item>) => void;
+	moveItemToRoom: (item: Item, roomId: string) => void;
+	removeItemFromRoom: (item: Item, roomId: string) => void;
 }
 
 type GameStore = GameState & GameActions;

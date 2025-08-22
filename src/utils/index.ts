@@ -1,14 +1,16 @@
 import { items } from "../game/items";
 import { cornetto } from "../game/items/cornetto";
-import { rooms } from "../game/rooms";
 
 export const generateRoomItemsDescription = (
 	roomDesc: string,
 	roomItems: Item[]
 ) => {
 	let description = roomDesc + "\n";
+	const distRoomItems = [...new Set(roomItems)];
 
-	roomItems.map((item) => (description += item.describeItem + "\n"));
+	distRoomItems.map((item) => {
+		description += item.describeItem + "\n";
+	});
 
 	return description;
 };
@@ -40,12 +42,13 @@ export const validateItemExists = (target: string) => {
 };
 
 export const findItem = (target: string, context: GameStore) => {
-	const room = rooms[context.currentRoom];
-	const roomItems = context.roomItems[room.id];
+	const roomItems = context.roomItems[context.currentRoom];
 
-	const itemInRoom = roomItems.find((item) => item.name === target);
-	const itemInInventory = context.inventory.find(
-		(item) => item.name === target || item.aliases?.includes(target)
+	const itemInRoom = roomItems.find((item) =>
+		[item.name, ...(item.aliases || [])].includes(target)
+	);
+	const itemInInventory = context.inventory.find((item) =>
+		[item.name, ...(item.aliases || [])].includes(target)
 	);
 	const itemIsCornetto = [cornetto.name, ...cornetto.aliases!].includes(target)
 		? cornetto
@@ -72,4 +75,23 @@ export const getFridgeMessage = (
 			: "a single cornetto awaits";
 
 	return `${prefix}${cornettoText}.`;
+};
+
+export const canAccessCornetto = (context: GameStore) => {
+	const { roomItems, inventory, currentRoom, gameFlags } = context;
+
+	const isInRoom = roomItems[currentRoom].some((i) => i.id === "cornetto");
+	const isInInventory = inventory.some((i) => i.id === "cornetto");
+	if (isInRoom || isInInventory) {
+		return true;
+	}
+
+	if (currentRoom === "lobby") {
+		if ((gameFlags["cornettosInFridge"] as number) === 0) return false;
+		if (gameFlags["isFridgeOpen"]) {
+			return true;
+		}
+	}
+
+	return false;
 };

@@ -10,7 +10,7 @@ const useCoffee = () => {
 		updateInventoryItem,
 	} = useGameStore.getState();
 
-	const coffee = inventory.find((i) => i.name === "coffee");
+	const coffee = inventory.find((i) => i.id === "coffee");
 
 	if (!coffee) {
 		addLine(
@@ -46,6 +46,28 @@ const useInspectCoffee = () => {
 	);
 };
 
+const useTakeCoffee = () => {
+	const { addToInventory, addLine, removeItemFromRoom, currentRoom } =
+		useGameStore.getState();
+
+	removeItemFromRoom(coffee, currentRoom);
+	addToInventory(coffee);
+	addLine(
+		"You hold the cup of coffee. Its warmth seeps into your hands, a quiet reminder that sometimes salvation comes in small, caffeinated doses."
+	);
+};
+
+const useDropCoffee = () => {
+	const { removeFromInventory, addLine, moveItemToRoom, currentRoom } =
+		useGameStore.getState();
+
+	removeFromInventory(coffee);
+	moveItemToRoom(coffee, currentRoom);
+	addLine(
+		"You set the coffee down. Its promise lingers in the air, quietly insisting that salvation can wait on the table for now."
+	);
+};
+
 export const coffee: Item = {
 	id: "coffee",
 	name: "coffee",
@@ -55,4 +77,7 @@ export const coffee: Item = {
 	use: useCoffee,
 	usesLeft: 3,
 	drinkable: true,
+	portable: true,
+	take: useTakeCoffee,
+	drop: useDropCoffee,
 };

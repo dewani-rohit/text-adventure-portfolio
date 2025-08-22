@@ -46,4 +46,5 @@ export const coffeeMachine: Item = {
 		"There is a small coffee machine humming quietly in the corner, polished chrome gleaming in the soft light.",
 	inspectItem: useInspectCoffeeMachine,
 	use: useCoffeeMachine,
+	portable: false,
 };

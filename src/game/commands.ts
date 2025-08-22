@@ -1,10 +1,16 @@
 import {
+	badDropResponses,
 	badInspectResponses,
 	badOpenResponses,
+	badTakeResponses,
 	badUseResponses,
+	emptyInventoryResponses,
 	helpResponse,
+	inventoryFullResponses,
+	notPortableResponses,
 } from "../constants";
 import {
+	canAccessCornetto,
 	findItem,
 	generateRoomItemsDescription,
 	getFridgeMessage,
@@ -40,7 +46,7 @@ const handleLook = (target: string, context: GameStore) => {
 			const responses: Record<string, string> = {
 				in: "You take a moment to peer into yourself. The results are inconclusive.",
 				at: "At... what, precisely? A little specificity would be delightful.",
-				out: "Look out! â€¦Ah. False alarm. Carry on.",
+				out: "Look out! False alarm. Carry on.",
 			};
 
 			const response = responses[preposition] || "";
@@ -119,11 +125,10 @@ const handleOpen = (target: string, context: GameStore) => {
 		return;
 	}
 
-	const room = rooms[context.currentRoom];
-	const roomItems = context.roomItems[room.id];
-	const itemInRoom = roomItems.find((item) => item.name === target);
+	const object = findItem(target, context);
+	const isCornettoAround = canAccessCornetto(context);
 
-	if (!itemInRoom) {
+	if (!object || (object.id === "cornetto" && !isCornettoAround)) {
 		const response =
 			badOpenResponses(target)[
 				Math.floor(Math.random() * badOpenResponses(target).length)
@@ -226,6 +231,127 @@ const handleUse = (target: string, context: GameStore) => {
 	object.use();
 };
 
+const handleTake = (target: string, context: GameStore) => {
+	if (!target) {
+		context.addLine(`How about you "take" a moment to specify what you want?`);
+		return;
+	}
+
+	if (target === "room") {
+		context.addLine(
+			"That's not how rooms work. They tend to be the ones doing the holding."
+		);
+		return;
+	}
+
+	const error = validateItemExists(target);
+	if (error) {
+		context.addLine(error);
+		return;
+	}
+
+	const alreadyHolding = context.inventory.find((i) =>
+		[i.name, ...(i.aliases || [])].includes(target)
+	);
+	if (alreadyHolding && alreadyHolding.id !== "cornetto") {
+		context.addLine(
+			`Your grasp tightens on ${target}, which you already hold. A triumph of redundancy.`
+		);
+		return;
+	}
+
+	const object = findItem(target, context);
+	if (!object) {
+		const response =
+			badTakeResponses(target)[
+				Math.floor(Math.random() * badTakeResponses(target).length)
+			];
+		context.addLine(response);
+		return;
+	}
+
+	if (!object.portable || !object.take) {
+		const response =
+			notPortableResponses[
+				Math.floor(Math.random() * notPortableResponses.length)
+			];
+		context.addLine(response);
+		return;
+	}
+
+	if (context.inventory.length === 5) {
+		const response =
+			inventoryFullResponses[
+				Math.floor(Math.random() * inventoryFullResponses.length)
+			];
+		context.addLine(response);
+		return;
+	}
+
+	object.take();
+};
+
+const handleDrop = (target: string, context: GameStore) => {
+	if (!target) {
+		context.addLine(
+			"You'll need to clarify what exactly is being let go of. Existential baggage doesn't count."
+		);
+		return;
+	}
+
+	if (target === "room") {
+		context.addLine(
+			"That's not how rooms work. They tend to be the ones doing the holding."
+		);
+		return;
+	}
+
+	const error = validateItemExists(target);
+	if (error) {
+		context.addLine(error);
+		return;
+	}
+
+	const object = context.inventory.find((i) =>
+		[i.name, ...(i.aliases || [])].includes(target)
+	);
+	if (!object || !object.portable || !object.drop) {
+		const responses =
+			badDropResponses[Math.floor(Math.random() * badDropResponses.length)];
+		context.addLine(responses);
+		return;
+	}
+
+	object.drop();
+};
+
+const handleShowInventory = (target: string, context: GameStore) => {
+	const error = validateTarget(target);
+	if (error) {
+		context.addLine(error);
+		return;
+	}
+
+	if (context.inventory.length === 0) {
+		const response =
+			emptyInventoryResponses[
+				Math.floor(Math.random() * emptyInventoryResponses.length)
+			];
+		context.addLine(response);
+		return;
+	}
+
+	let response = `You are currently holding [${context.inventory.length}/5]:\n`;
+	const inventorySet = new Set(context.inventory);
+	inventorySet.forEach((i) => {
+		const count = context.inventory.filter((item) => item.id === i.id).length;
+		response += `• ${
+			i.name[0].toUpperCase() + i.name.split("").splice(1).join("")
+		} — ${count}\n  ${i.describeItem}\n`;
+	});
+	context.addLine(response);
+};
+
 export const commands: CommandDefinition[] = [
 	{
 		name: "help",
@@ -259,4 +385,20 @@ export const commands: CommandDefinition[] = [
 		aliases: ["u"],
 		execute: handleUse,
 	},
+	{
+		name: "take",
+		aliases: ["pick", "pick up", "grab", "hold", "possess", "acquire"],
+		execute: handleTake,
+	},
+	{
+		name: "drop",
+		aliases: ["discard", "leave", "remove", "release"],
+		execute: handleDrop,
+	},
+	{
+		name: "inventory",
+		aliases: ["i", "bag"],
+		execute: handleShowInventory,
+	},
+	// TODO: make, drink, and consume for consumables
 ];

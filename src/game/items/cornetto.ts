@@ -1,15 +1,14 @@
-import { badInspectResponses } from "../../constants";
+import { badInspectResponses, badTakeResponses } from "../../constants";
 import { useGameStore } from "../store";
 
 const useCornetto = () => {
-	const {
-		inventory,
-		addLine,
-		gameFlags,
-		setFlag,
-		removeFromInventory,
-		updateInventoryItem,
-	} = useGameStore.getState();
+	const { inventory, addLine, gameFlags, setFlag, removeFromInventory } =
+		useGameStore.getState();
+
+	if (gameFlags["cornettosConsumed"] === 3) {
+		addLine("If you'd left even one uneaten, this might have worked.");
+		return;
+	}
 
 	const cornetto = inventory.find((i) => i.name === "cornetto");
 
@@ -41,18 +40,22 @@ const useCornetto = () => {
 	}
 
 	cornettosConsumed += 1;
-	const cornettoUsesLeft = (cornetto?.usesLeft || 0) - 1;
 	setFlag("cornettosConsumed", cornettosConsumed);
-	updateInventoryItem("cornetto", { usesLeft: cornettoUsesLeft });
-
-	if (cornetto && cornettoUsesLeft <= 0) removeFromInventory(cornetto);
+	removeFromInventory(cornetto);
 };
 
 const useInspectCornetto = () => {
 	const { addLine, inventory, currentRoom, gameFlags } =
 		useGameStore.getState();
 
-	const isInInventory = inventory.some((i) => i.name === "cornetto");
+	if (gameFlags["cornettosConsumed"] === 3) {
+		addLine(
+			"There is nothing left to observe, except your own gluttony and lack of restraint."
+		);
+		return;
+	}
+
+	const isInInventory = inventory.some((i) => i.id === "cornetto");
 
 	if (!isInInventory) {
 		const isInLobby = currentRoom === "lobby";
@@ -82,13 +85,108 @@ const useInspectCornetto = () => {
 	);
 };
 
+const useTakeCornetto = () => {
+	const {
+		gameFlags,
+		setFlag,
+		inventory,
+		addLine,
+		roomItems,
+		currentRoom,
+		addToInventory,
+		removeItemFromRoom,
+	} = useGameStore.getState();
+
+	if (gameFlags["cornettosConsumed"] === 3) {
+		addLine(
+			"There are no more Cornettos left to take. You make certain of that."
+		);
+		return;
+	}
+
+	const cornettosRemaining = 3 - (gameFlags["cornettosConsumed"] as number);
+	const cornettosHolding = inventory.filter((i) => i.id === "cornetto").length;
+
+	if (cornettosRemaining === cornettosHolding) {
+		addLine(
+			"All the Cornettos left in this world are in your hands. A monopoly both glorious and short-lived."
+		);
+		return;
+	}
+
+	const isInRoom = roomItems[currentRoom].some((i) => i.id === "cornetto");
+
+	if (isInRoom) {
+		removeItemFromRoom(cornetto, currentRoom);
+		addToInventory(cornetto);
+		addLine(
+			"Claimed. Cold, sweet, and arguably the highlight of your career so far."
+		);
+		return;
+	}
+
+	if (currentRoom === "lobby") {
+		if (!gameFlags["isFridgeOpen"]) {
+			addLine(
+				"You scan the area. No Cornettos lounging about. Should such a delicacy exist, it would likely keep itself cool elsewhere."
+			);
+			return;
+		}
+
+		const cornettosInFridge = gameFlags["cornettosInFridge"] as number;
+		if (cornettosInFridge > 0) {
+			setFlag("cornettosInFridge", cornettosInFridge - 1);
+			addToInventory(cornetto);
+			addLine(
+				"Claimed. Cold, sweet, and arguably the highlight of your career so far."
+			);
+			return;
+		}
+	}
+
+	const response =
+		badTakeResponses("cornetto")[
+			Math.floor(Math.random() * badTakeResponses("cornetto").length)
+		];
+	addLine(response);
+};
+
+const useDropCornetto = () => {
+	const {
+		removeFromInventory,
+		addLine,
+		moveItemToRoom,
+		currentRoom,
+		gameFlags,
+		setFlag,
+	} = useGameStore.getState();
+
+	if (currentRoom === "lobby" && gameFlags["isFridgeOpen"]) {
+		removeFromInventory(cornetto);
+		setFlag(
+			"cornettosInFridge",
+			(gameFlags["cornettosInFridge"] as number) + 1
+		);
+		addLine("You return the Cornetto to its chilly homeland.");
+		return;
+	}
+
+	removeFromInventory(cornetto);
+	moveItemToRoom(cornetto, currentRoom);
+	addLine(
+		"You set the Cornetto aside. Smart move, leaving frozen dairy at room temperature."
+	);
+};
+
 export const cornetto: Item = {
 	id: "cornetto",
 	name: "cornetto",
 	aliases: ["ice cream", "ice-cream", "icecream"],
-	describeItem: "A Cornetto. The simplest of frozen consolations.",
+	describeItem: "There is a Cornetto. The simplest of frozen consolations.",
 	inspectItem: useInspectCornetto,
 	use: useCornetto,
 	eatable: true,
-	usesLeft: 1,
+	portable: true,
+	take: useTakeCornetto,
+	drop: useDropCornetto,
 };

@@ -22,4 +22,5 @@ export const clock: Item = {
 	describeItem: "There is a wall clock hanging just above eye level.",
 	inspectItem: useInspectClock,
 	use: useClock,
+	portable: false,
 };
