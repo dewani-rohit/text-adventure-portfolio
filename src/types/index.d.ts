@@ -8,6 +8,8 @@ interface Room {
 	name: string;
 	briefDescription: string;
 	detailedDescription: string;
+	exitDescription: string;
+	exits: { [key: string]: string };
 }
 
 interface Item {

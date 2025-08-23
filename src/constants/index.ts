@@ -5,7 +5,8 @@ export const helpResponse = `Available commands:
 • inspect [object] - Examine something thoroughly (or at least pretend you are).
 • use [object] - Attempt to interact with the object.
 • take [object] - Attempt to acquire an item.
-• drop [object] - Attempt to relieve yourself of an item.`;
+• drop [object] - Attempt to relieve yourself of an item.
+• go [direction] - Go in the specified direction.`;
 
 export const blankResponses = [
 	"Input not detected. Silence may be profound, but it is also unproductive.",

@@ -68,7 +68,7 @@ const handleLook = (target: string, context: GameStore) => {
 	}
 
 	const room = rooms[context.currentRoom];
-	const roomDesc = room.detailedDescription;
+	const roomDesc = `${room.detailedDescription} ${room.exitDescription}`;
 	const roomItems = context.roomItems[room.id];
 	const description = generateRoomItemsDescription(roomDesc, roomItems);
 	context.addLine(description);
@@ -345,9 +345,9 @@ const handleShowInventory = (target: string, context: GameStore) => {
 	const inventorySet = new Set(context.inventory);
 	inventorySet.forEach((i) => {
 		const count = context.inventory.filter((item) => item.id === i.id).length;
-		response += `• ${
-			i.name[0].toUpperCase() + i.name.split("").splice(1).join("")
-		} — ${count}\n  ${i.describeItem}\n`;
+		response += `• ${i.name[0].toUpperCase() + i.name.slice(1)} — ${count}\n  ${
+			i.describeItem
+		}\n`;
 	});
 	context.addLine(response);
 };
@@ -434,6 +434,167 @@ const handleDrink = (target: string, context: GameStore) => {
 	handleConsume(target, context);
 };
 
+const handleGo = (target: string, context: GameStore) => {
+	if (!target) {
+		context.addLine(
+			"Go where? Forward in life? Back to bed? You'll need to be slightly more specific."
+		);
+		return;
+	}
+
+	if (target === "to hell") {
+		context.addLine("Haven't you figured out you're already in the Bad Place?");
+		return;
+	}
+
+	if (target === "back") {
+		if (!context.previousRoom) {
+			context.addLine("There's no going back.");
+			return;
+		}
+
+		context.setCurrentRoom(context.previousRoom);
+		return;
+	}
+
+	const currentRoomExits = rooms[context.currentRoom].exits;
+	const [preposition, ...rest] = target.split(" ");
+	const destination = rest.join(" ");
+
+	if (["in", "to"].includes(preposition)) {
+		if (["lobby", "office", "study", "lab"].includes(destination)) {
+			if (context.currentRoom === destination) {
+				context.addLine(
+					"You stand in place, accomplishing nothing. A masterclass in futility."
+				);
+				return;
+			}
+			const exitExists = Object.values(currentRoomExits).includes(destination);
+
+			if (!exitExists) {
+				context.addLine(
+					"You can't go through walls. You're not a ghost... or fire."
+				);
+				return;
+			}
+
+			if (
+				context.currentRoom === "lobby" &&
+				context.gameFlags["isFridgeOpen"]
+			) {
+				context.addLine("Ahem… the fridge. Still open.");
+				return;
+			}
+
+			context.setCurrentRoom(destination);
+			return;
+		}
+	}
+
+	if (["n", "e", "w", "s", "north", "east", "west", "south"].includes(target)) {
+		let getRoom;
+
+		if (["n", "north"].includes(target)) {
+			getRoom = currentRoomExits["north"];
+		}
+
+		if (["e", "east"].includes(target)) {
+			getRoom = currentRoomExits["east"];
+		}
+
+		if (["w", "west"].includes(target)) {
+			getRoom = currentRoomExits["west"];
+		}
+
+		if (["s", "south"].includes(target)) {
+			getRoom = currentRoomExits["south"];
+		}
+
+		if (!getRoom) {
+			context.addLine(
+				"Forward momentum meets solid object. Guess which one yields? (Hint: not the object.)"
+			);
+			return;
+		}
+
+		if (getRoom) {
+			context.setCurrentRoom(getRoom);
+			return;
+		}
+	}
+
+	context.addLine(
+		`You can't just type words after "go" and expect magic. This isn't improv theatre.`
+	);
+};
+
+const handleGoBack = (target: string, context: GameStore) => {
+	const error = validateTarget(target);
+	if (error) {
+		context.addLine(error);
+		return;
+	}
+
+	handleGo("back", context);
+};
+
+const handleGoNorth = (target: string, context: GameStore) => {
+	const error = validateTarget(target);
+	if (error) {
+		context.addLine(error);
+		return;
+	}
+
+	handleGo("north", context);
+};
+
+const handleGoEast = (target: string, context: GameStore) => {
+	const error = validateTarget(target);
+	if (error) {
+		context.addLine(error);
+		return;
+	}
+
+	handleGo("east", context);
+};
+
+const handleGoWest = (target: string, context: GameStore) => {
+	const error = validateTarget(target);
+	if (error) {
+		context.addLine(error);
+		return;
+	}
+
+	handleGo("west", context);
+};
+
+const handleGoSouth = (target: string, context: GameStore) => {
+	const error = validateTarget(target);
+	if (error) {
+		context.addLine(error);
+		return;
+	}
+
+	handleGo("south", context);
+};
+
+const handleExit = (target: string, context: GameStore) => {
+	const error = validateTarget(target, "room");
+	if (error) {
+		context.addLine(error);
+		return;
+	}
+
+	const currentRoomExits = rooms[context.currentRoom].exits;
+	if (Object.entries(currentRoomExits).length > 1) {
+		context.addLine("So many ways out, so little clarity. Care to pick one?");
+		return;
+	}
+
+	const exit = Object.keys(currentRoomExits)[0];
+	handleGo(exit, context);
+};
+
 export const commands: CommandDefinition[] = [
 	{
 		name: "help",
@@ -494,5 +655,38 @@ export const commands: CommandDefinition[] = [
 		name: "drink",
 		aliases: ["sip", "slurp"],
 		execute: handleDrink,
+	},
+	{
+		name: "go",
+		aliases: ["walk", "move"],
+		execute: handleGo,
+	},
+	{
+		name: "north",
+		aliases: ["n"],
+		execute: handleGoNorth,
+	},
+	{
+		name: "east",
+		aliases: ["e"],
+		execute: handleGoEast,
+	},
+	{
+		name: "west",
+		aliases: ["w"],
+		execute: handleGoWest,
+	},
+	{
+		name: "south",
+		aliases: ["s"],
+		execute: handleGoSouth,
+	},
+	{
+		name: "back",
+		execute: handleGoBack,
+	},
+	{
+		name: "exit",
+		execute: handleExit,
 	},
 ];

@@ -19,7 +19,7 @@ const INITIAL_FLAGS: { [flag: string]: boolean | number } = {
 
 const initializeGameState = () => ({
 	history: [],
-	currentRoom: "lobby",
+	currentRoom: "",
 	previousRoom: null,
 	roomItems: INITIAL_ROOM_ITEMS,
 	gameFlags: INITIAL_FLAGS,
@@ -36,6 +36,23 @@ export const useGameStore = create<GameStore>()(
 					history: [...state.history, { role, text }],
 				})),
 
+			setCurrentRoom: (roomId) => {
+				set((state) => ({
+					previousRoom: state.currentRoom,
+					currentRoom: roomId,
+				}));
+				const room = rooms[roomId];
+
+				if (room) {
+					const roomDesc = `${room.briefDescription} ${room.exitDescription}`;
+					const roomItems = get().roomItems[room.id];
+
+					const description = generateRoomItemsDescription(roomDesc, roomItems);
+
+					get().addLine(`\n[${room.name}]\n${description}`);
+				}
+			},
+
 			startGame: () => {
 				if (get().history.length === 0) {
 					set(initializeGameState());
@@ -46,23 +63,6 @@ export const useGameStore = create<GameStore>()(
 			restartGame: () => {
 				set(initializeGameState());
 				get().setCurrentRoom("lobby");
-			},
-
-			setCurrentRoom: (roomId) => {
-				set((state) => ({
-					currentRoom: roomId,
-					previousRoom: state.currentRoom,
-				}));
-				const room = rooms[roomId];
-
-				if (room) {
-					const roomDesc = room.briefDescription;
-					const roomItems = get().roomItems[room.id];
-
-					const description = generateRoomItemsDescription(roomDesc, roomItems);
-
-					get().addLine(`\n[${room.name}]\n${description}`);
-				}
 			},
 
 			setFlag: (flag, value) =>

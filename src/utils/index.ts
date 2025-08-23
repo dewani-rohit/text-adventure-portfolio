@@ -9,14 +9,17 @@ export const generateRoomItemsDescription = (
 	const distRoomItems = [...new Set(roomItems)];
 
 	distRoomItems.map((item) => {
-		description += item.describeItem + "\n";
+		description += item.describeItem + "\t";
 	});
 
 	return description;
 };
 
 export const validateTarget = (target: string, expectedTarget?: string) => {
-	if (target && expectedTarget && target !== expectedTarget) {
+	if (
+		(target && expectedTarget && target !== expectedTarget) ||
+		(target && !expectedTarget)
+	) {
 		return "Alas, something about that input escapes comprehension.";
 	}
 	return null;
