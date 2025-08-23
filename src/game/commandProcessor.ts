@@ -37,7 +37,6 @@ const parseInput = (input: string) => {
 	if (normalizedInput.startsWith("pick up")) {
 		const action = "pick up";
 		const target = normalizedInput.split(" ").slice(2).join(" ");
-		console.log({ action, target });
 		return { input, normalizedInput, action, target };
 	}
 

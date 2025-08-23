@@ -15,35 +15,6 @@ export const generateRoomItemsDescription = (
 	return description;
 };
 
-export const validateTarget = (target: string, expectedTarget?: string) => {
-	if (
-		(target && expectedTarget && target !== expectedTarget) ||
-		(target && !expectedTarget)
-	) {
-		return "Alas, something about that input escapes comprehension.";
-	}
-	return null;
-};
-
-export const validateItemExists = (target: string) => {
-	const itemInGame = Object.values(items).some(
-		(item) => item.name === target || item.aliases?.includes(target)
-	);
-
-	if (!itemInGame) {
-		let regex = /\s+[a-zA-Z]+\s+\w+/.test(target);
-		if (target.split(" ").length >= 2) {
-			regex = /\s+([a-zA-Z]+(?:\s+[a-zA-Z]+)*)/.test(target);
-		}
-
-		if (regex) {
-			return "Alas, something about that input escapes comprehension.";
-		}
-		return `I do not know what "${target}" is.`;
-	}
-	return null;
-};
-
 export const findItem = (target: string, context: GameStore) => {
 	const roomItems = context.roomItems[context.currentRoom];
 
@@ -97,4 +68,96 @@ export const canAccessCornetto = (context: GameStore) => {
 	}
 
 	return false;
+};
+
+export const getRandomResponse =
+	(responses: string[] | ((target: string) => string[])) =>
+	(target?: string) => {
+		const responseArray =
+			typeof responses === "function" ? responses(target!) : responses;
+		return responseArray[Math.floor(Math.random() * responseArray.length)];
+	};
+
+export const validateCommand = (
+	target: string,
+	context: GameStore,
+	options: {
+		expectedTarget?: string;
+		noTargetMessage?: string;
+		needsItem?: boolean;
+		allowRoom?: boolean;
+		roomMessage?: string;
+	}
+) => {
+	const { expectedTarget, noTargetMessage, needsItem, allowRoom, roomMessage } =
+		options;
+
+	if (noTargetMessage && !target) {
+		context.addLine(noTargetMessage);
+		return true;
+	}
+
+	if (expectedTarget && target && target !== expectedTarget) {
+		context.addLine("Alas, something about that input escapes comprehension.");
+		return true;
+	}
+
+	if (!expectedTarget && !needsItem && !allowRoom && target) {
+		context.addLine("Alas, something about that input escapes comprehension.");
+		return true;
+	}
+
+	if (target === "room") {
+		if (allowRoom && roomMessage) {
+			context.addLine(roomMessage);
+			return true;
+		}
+		if (!allowRoom) {
+			context.addLine(
+				roomMessage ||
+					"That's not how rooms work. They tend to be the ones doing the holding."
+			);
+			return true;
+		}
+	}
+
+	if (needsItem && target && target !== "room") {
+		const itemExists = Object.values(items).some(
+			(item) => item.name === target || item.aliases?.includes(target)
+		);
+
+		if (!itemExists) {
+			if (
+				target.split(" ").length >= 2 &&
+				/\s+([a-zA-Z]+(?:\s+[a-zA-Z]+)*)/.test(target)
+			) {
+				context.addLine(
+					"Alas, something about that input escapes comprehension."
+				);
+				return true;
+			}
+			context.addLine(`I do not know what "${target}" is.`);
+			return true;
+		}
+	}
+
+	return false;
+};
+
+export const createLookResponses = () => ({
+	in: "You take a moment to peer into yourself. The results are inconclusive.",
+	at: "At... what, precisely? A little specificity would be delightful.",
+	out: "Look out! False alarm. Carry on.",
+});
+
+export const generateInventoryDisplay = (inventory: Item[]) => {
+	let response = `You are currently holding [${inventory.length}/5]:\n`;
+	const inventorySet = new Set(inventory);
+	inventorySet.forEach((i) => {
+		const count = inventory.filter((item) => item.id === i.id).length;
+		response += `• ${i.name[0].toUpperCase() + i.name.slice(1)} — ${count}\n  ${
+			i.describeItem
+		}\n`;
+	});
+	return response;
 };

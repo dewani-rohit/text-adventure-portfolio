@@ -11,29 +11,23 @@ import {
 } from "../constants";
 import {
 	canAccessCornetto,
+	createLookResponses,
 	findItem,
+	generateInventoryDisplay,
 	generateRoomItemsDescription,
 	getFridgeMessage,
-	validateItemExists,
-	validateTarget,
+	getRandomResponse,
+	validateCommand,
 } from "../utils";
 import { rooms } from "./rooms";
 
 const handleHelp = (target: string, context: GameStore) => {
-	const error = validateTarget(target, "me");
-	if (error) {
-		context.addLine(error);
-		return;
-	}
+	if (validateCommand(target, context, { expectedTarget: "me" })) return;
 	context.addLine(helpResponse);
 };
 
 const handleRestart = (target: string, context: GameStore) => {
-	const error = validateTarget(target, "game");
-	if (error) {
-		context.addLine(error);
-		return;
-	}
+	if (validateCommand(target, context, { expectedTarget: "game" })) return;
 	context.restartGame();
 };
 
@@ -43,20 +37,13 @@ const handleLook = (target: string, context: GameStore) => {
 		const objectName = rest.join(" ");
 
 		if (!objectName) {
-			const responses: Record<string, string> = {
-				in: "You take a moment to peer into yourself. The results are inconclusive.",
-				at: "At... what, precisely? A little specificity would be delightful.",
-				out: "Look out! False alarm. Carry on.",
-			};
-
-			const response = responses[preposition] || "";
-			context.addLine(response);
+			const responses = createLookResponses();
+			context.addLine(responses[preposition as keyof typeof responses] || "");
 		} else {
 			if (preposition === "at") {
 				handleInspect(objectName, context);
 				return;
 			}
-
 			if (["in", "inside"].includes(preposition)) {
 				handleOpen(objectName, context);
 				return;
@@ -75,31 +62,24 @@ const handleLook = (target: string, context: GameStore) => {
 };
 
 const handleInspect = (target: string, context: GameStore) => {
-	if (!target) {
-		context.addLine(
-			"Inspect what? The void? The meaninglessness of your choices? Specify something tangible, please."
-		);
+	if (
+		validateCommand(target, context, {
+			noTargetMessage:
+				"Inspect what? The void? The meaninglessness of your choices? Specify something tangible, please.",
+			needsItem: true,
+			allowRoom: true,
+		})
+	)
 		return;
-	}
 
 	if (target === "room") {
 		handleLook("", context);
 		return;
 	}
 
-	const error = validateItemExists(target);
-	if (error) {
-		context.addLine(error);
-		return;
-	}
-
 	const object = findItem(target, context);
 	if (!object) {
-		const response =
-			badInspectResponses[
-				Math.floor(Math.random() * badInspectResponses.length)
-			];
-		context.addLine(response);
+		context.addLine(getRandomResponse(badInspectResponses)());
 		return;
 	}
 
@@ -107,21 +87,18 @@ const handleInspect = (target: string, context: GameStore) => {
 };
 
 const handleOpen = (target: string, context: GameStore) => {
-	if (!target) {
-		context.addLine(
-			"Open what? The possibilities are endless... but you need to pick one."
-		);
+	if (
+		validateCommand(target, context, {
+			noTargetMessage:
+				"Open what? The possibilities are endless... but you need to pick one.",
+			needsItem: true,
+			allowRoom: true,
+		})
+	)
 		return;
-	}
 
 	if (target === "room") {
 		handleLook("", context);
-		return;
-	}
-
-	const error = validateItemExists(target);
-	if (error) {
-		context.addLine(error);
 		return;
 	}
 
@@ -129,11 +106,7 @@ const handleOpen = (target: string, context: GameStore) => {
 	const isCornettoAround = canAccessCornetto(context);
 
 	if (!object || (object.id === "cornetto" && !isCornettoAround)) {
-		const response =
-			badOpenResponses(target)[
-				Math.floor(Math.random() * badOpenResponses(target).length)
-			];
-		context.addLine(response);
+		context.addLine(getRandomResponse(badOpenResponses)(target));
 		return;
 	}
 
@@ -147,35 +120,26 @@ const handleOpen = (target: string, context: GameStore) => {
 	const isFridgeOpen = context.gameFlags["isFridgeOpen"];
 	const cornettosInFridge = context.gameFlags["cornettosInFridge"] as number;
 
-	if (isFridgeOpen) {
-		const message = `Fridge door was already ajar. ${getFridgeMessage(
-			cornettosInFridge
-		)}`;
-		context.addLine(message);
-		return;
+	const message = isFridgeOpen
+		? `Fridge door was already ajar. ${getFridgeMessage(cornettosInFridge)}`
+		: `You open the fridge. ${getFridgeMessage(cornettosInFridge, true)}`;
+
+	if (!isFridgeOpen) {
+		context.setFlag("isFridgeOpen", true);
 	}
 
-	context.setFlag("isFridgeOpen", true);
-	const message = `You open the fridge. ${getFridgeMessage(
-		cornettosInFridge,
-		true
-	)}`;
 	context.addLine(message);
 };
 
 const handleClose = (target: string, context: GameStore) => {
-	if (!target) {
-		context.addLine(
-			`One could "close" many things, but alas none are specified.`
-		);
+	if (
+		validateCommand(target, context, {
+			noTargetMessage: `One could "close" many things, but alas none are specified.`,
+			needsItem: true,
+			roomMessage: "You could have closed it... if only it were ever openable.",
+		})
+	)
 		return;
-	}
-
-	const error = validateItemExists(target);
-	if (error) {
-		context.addLine(error);
-		return;
-	}
 
 	if (target !== "fridge") {
 		context.addLine(
@@ -198,33 +162,19 @@ const handleClose = (target: string, context: GameStore) => {
 };
 
 const handleUse = (target: string, context: GameStore) => {
-	if (!target) {
-		context.addLine(
-			"Use what? Your imagination? Your degree? Your crippling social anxiety? Please specify."
-		);
+	if (
+		validateCommand(target, context, {
+			noTargetMessage:
+				"Use what? Your imagination? Your degree? Your crippling social anxiety? Please specify.",
+			needsItem: true,
+			roomMessage: `Ah, yes. You attempt to "use" the room. Congratulations, you are already using it by standing in it.`,
+		})
+	)
 		return;
-	}
-
-	if (target === "room") {
-		context.addLine(
-			`Ah, yes. You attempt to "use" the room. Congratulations, you are already using it by standing in it.`
-		);
-		return;
-	}
-
-	const error = validateItemExists(target);
-	if (error) {
-		context.addLine(error);
-		return;
-	}
 
 	const object = findItem(target, context);
 	if (!object) {
-		const response =
-			badUseResponses(target)[
-				Math.floor(Math.random() * badUseResponses(target).length)
-			];
-		context.addLine(response);
+		context.addLine(getRandomResponse(badUseResponses)(target));
 		return;
 	}
 
@@ -232,23 +182,13 @@ const handleUse = (target: string, context: GameStore) => {
 };
 
 const handleTake = (target: string, context: GameStore) => {
-	if (!target) {
-		context.addLine(`How about you "take" a moment to specify what you want?`);
+	if (
+		validateCommand(target, context, {
+			noTargetMessage: `How about you "take" a moment to specify what you want?`,
+			needsItem: true,
+		})
+	)
 		return;
-	}
-
-	if (target === "room") {
-		context.addLine(
-			"That's not how rooms work. They tend to be the ones doing the holding."
-		);
-		return;
-	}
-
-	const error = validateItemExists(target);
-	if (error) {
-		context.addLine(error);
-		return;
-	}
 
 	const alreadyHolding = context.inventory.find((i) =>
 		[i.name, ...(i.aliases || [])].includes(target)
@@ -262,29 +202,17 @@ const handleTake = (target: string, context: GameStore) => {
 
 	const object = findItem(target, context);
 	if (!object) {
-		const response =
-			badTakeResponses(target)[
-				Math.floor(Math.random() * badTakeResponses(target).length)
-			];
-		context.addLine(response);
+		context.addLine(getRandomResponse(badTakeResponses)(target));
 		return;
 	}
 
 	if (!object.portable || !object.take) {
-		const response =
-			notPortableResponses[
-				Math.floor(Math.random() * notPortableResponses.length)
-			];
-		context.addLine(response);
+		context.addLine(getRandomResponse(notPortableResponses)());
 		return;
 	}
 
 	if (context.inventory.length === 5) {
-		const response =
-			inventoryFullResponses[
-				Math.floor(Math.random() * inventoryFullResponses.length)
-			];
-		context.addLine(response);
+		context.addLine(getRandomResponse(inventoryFullResponses)());
 		return;
 	}
 
@@ -292,33 +220,20 @@ const handleTake = (target: string, context: GameStore) => {
 };
 
 const handleDrop = (target: string, context: GameStore) => {
-	if (!target) {
-		context.addLine(
-			"You'll need to clarify what exactly is being let go of. Existential baggage doesn't count."
-		);
+	if (
+		validateCommand(target, context, {
+			noTargetMessage:
+				"You'll need to clarify what exactly is being let go of. Existential baggage doesn't count.",
+			needsItem: true,
+		})
+	)
 		return;
-	}
-
-	if (target === "room") {
-		context.addLine(
-			"That's not how rooms work. They tend to be the ones doing the holding."
-		);
-		return;
-	}
-
-	const error = validateItemExists(target);
-	if (error) {
-		context.addLine(error);
-		return;
-	}
 
 	const object = context.inventory.find((i) =>
 		[i.name, ...(i.aliases || [])].includes(target)
 	);
 	if (!object || !object.portable || !object.drop) {
-		const responses =
-			badDropResponses[Math.floor(Math.random() * badDropResponses.length)];
-		context.addLine(responses);
+		context.addLine(getRandomResponse(badDropResponses)());
 		return;
 	}
 
@@ -326,60 +241,31 @@ const handleDrop = (target: string, context: GameStore) => {
 };
 
 const handleShowInventory = (target: string, context: GameStore) => {
-	const error = validateTarget(target);
-	if (error) {
-		context.addLine(error);
-		return;
-	}
+	if (validateCommand(target, context, {})) return;
 
 	if (context.inventory.length === 0) {
-		const response =
-			emptyInventoryResponses[
-				Math.floor(Math.random() * emptyInventoryResponses.length)
-			];
-		context.addLine(response);
+		context.addLine(getRandomResponse(emptyInventoryResponses)());
 		return;
 	}
 
-	let response = `You are currently holding [${context.inventory.length}/5]:\n`;
-	const inventorySet = new Set(context.inventory);
-	inventorySet.forEach((i) => {
-		const count = context.inventory.filter((item) => item.id === i.id).length;
-		response += `• ${i.name[0].toUpperCase() + i.name.slice(1)} — ${count}\n  ${
-			i.describeItem
-		}\n`;
-	});
-	context.addLine(response);
+	context.addLine(generateInventoryDisplay(context.inventory));
 };
 
 const handleConsume = (target: string, context: GameStore) => {
-	if (!target) {
-		context.addLine(
-			"An admirable instinct, but you'll need an object to devour, not just the concept of gluttony."
-		);
+	if (
+		validateCommand(target, context, {
+			noTargetMessage:
+				"An admirable instinct, but you'll need an object to devour, not just the concept of gluttony.",
+			needsItem: true,
+			roomMessage:
+				"Chewing drywall is not a recognized dietary choice, no matter how committed you look.",
+		})
+	)
 		return;
-	}
-
-	if (target === "room") {
-		context.addLine(
-			"Chewing drywall is not a recognized dietary choice, no matter how committed you look."
-		);
-		return;
-	}
-
-	const error = validateItemExists(target);
-	if (error) {
-		context.addLine(error);
-		return;
-	}
 
 	const object = findItem(target, context);
 	if (!object) {
-		const response =
-			badTakeResponses(target)[
-				Math.floor(Math.random() * badTakeResponses(target).length)
-			];
-		context.addLine(response);
+		context.addLine(getRandomResponse(badTakeResponses)(target));
 		return;
 	}
 
@@ -394,10 +280,12 @@ const handleConsume = (target: string, context: GameStore) => {
 };
 
 const handleEat = (target: string, context: GameStore) => {
-	if (!target) {
-		context.addLine("Hunger is clear, intent is not.");
+	if (
+		validateCommand(target, context, {
+			noTargetMessage: "Hunger is clear, intent is not.",
+		})
+	)
 		return;
-	}
 
 	const object = findItem(target, context);
 	if (object && object.drinkable && !object.eatable) {
@@ -411,19 +299,16 @@ const handleEat = (target: string, context: GameStore) => {
 };
 
 const handleDrink = (target: string, context: GameStore) => {
-	if (!target) {
-		context.addLine(
-			"Refreshing! If only there had been an actual beverage involved."
-		);
+	if (
+		validateCommand(target, context, {
+			noTargetMessage:
+				"Refreshing! If only there had been an actual beverage involved.",
+			needsItem: true,
+			roomMessage:
+				"Unless the room has been juiced lately, nothing's going to happen.",
+		})
+	)
 		return;
-	}
-
-	if (target === "room") {
-		context.addLine(
-			"Unless the room has been juiced lately, nothing's going to happen."
-		);
-		return;
-	}
 
 	const object = findItem(target, context);
 	if (object && !object.drinkable && object.eatable) {
@@ -434,7 +319,7 @@ const handleDrink = (target: string, context: GameStore) => {
 	handleConsume(target, context);
 };
 
-const handleGo = (target: string, context: GameStore) => {
+export const handleGo = (target: string, context: GameStore) => {
 	if (!target) {
 		context.addLine(
 			"Go where? Forward in life? Back to bed? You'll need to be slightly more specific."
@@ -452,7 +337,6 @@ const handleGo = (target: string, context: GameStore) => {
 			context.addLine("There's no going back.");
 			return;
 		}
-
 		context.setCurrentRoom(context.previousRoom);
 		return;
 	}
@@ -469,8 +353,8 @@ const handleGo = (target: string, context: GameStore) => {
 				);
 				return;
 			}
-			const exitExists = Object.values(currentRoomExits).includes(destination);
 
+			const exitExists = Object.values(currentRoomExits).includes(destination);
 			if (!exitExists) {
 				context.addLine(
 					"You can't go through walls. You're not a ghost... or fire."
@@ -491,36 +375,28 @@ const handleGo = (target: string, context: GameStore) => {
 		}
 	}
 
-	if (["n", "e", "w", "s", "north", "east", "west", "south"].includes(target)) {
-		let getRoom;
+	const directionMap: Record<string, string> = {
+		n: "north",
+		north: "north",
+		e: "east",
+		east: "east",
+		w: "west",
+		west: "west",
+		s: "south",
+		south: "south",
+	};
 
-		if (["n", "north"].includes(target)) {
-			getRoom = currentRoomExits["north"];
-		}
-
-		if (["e", "east"].includes(target)) {
-			getRoom = currentRoomExits["east"];
-		}
-
-		if (["w", "west"].includes(target)) {
-			getRoom = currentRoomExits["west"];
-		}
-
-		if (["s", "south"].includes(target)) {
-			getRoom = currentRoomExits["south"];
-		}
-
+	const direction = directionMap[target];
+	if (direction) {
+		const getRoom = currentRoomExits[direction];
 		if (!getRoom) {
 			context.addLine(
 				"Forward momentum meets solid object. Guess which one yields? (Hint: not the object.)"
 			);
 			return;
 		}
-
-		if (getRoom) {
-			context.setCurrentRoom(getRoom);
-			return;
-		}
+		context.setCurrentRoom(getRoom);
+		return;
 	}
 
 	context.addLine(
@@ -528,62 +404,24 @@ const handleGo = (target: string, context: GameStore) => {
 	);
 };
 
-const handleGoBack = (target: string, context: GameStore) => {
-	const error = validateTarget(target);
-	if (error) {
-		context.addLine(error);
-		return;
-	}
+export const createDirectionalHandler =
+	(direction: string) => (target: string, context: GameStore) => {
+		if (target) {
+			context.addLine(
+				"Alas, something about that input escapes comprehension."
+			);
+			return;
+		}
+		handleGo(direction, context);
+	};
 
+const handleGoBack = (target: string, context: GameStore) => {
+	if (validateCommand(target, context, {})) return;
 	handleGo("back", context);
 };
 
-const handleGoNorth = (target: string, context: GameStore) => {
-	const error = validateTarget(target);
-	if (error) {
-		context.addLine(error);
-		return;
-	}
-
-	handleGo("north", context);
-};
-
-const handleGoEast = (target: string, context: GameStore) => {
-	const error = validateTarget(target);
-	if (error) {
-		context.addLine(error);
-		return;
-	}
-
-	handleGo("east", context);
-};
-
-const handleGoWest = (target: string, context: GameStore) => {
-	const error = validateTarget(target);
-	if (error) {
-		context.addLine(error);
-		return;
-	}
-
-	handleGo("west", context);
-};
-
-const handleGoSouth = (target: string, context: GameStore) => {
-	const error = validateTarget(target);
-	if (error) {
-		context.addLine(error);
-		return;
-	}
-
-	handleGo("south", context);
-};
-
 const handleExit = (target: string, context: GameStore) => {
-	const error = validateTarget(target, "room");
-	if (error) {
-		context.addLine(error);
-		return;
-	}
+	if (validateCommand(target, context, { expectedTarget: "room" })) return;
 
 	const currentRoomExits = rooms[context.currentRoom].exits;
 	if (Object.entries(currentRoomExits).length > 1) {
@@ -596,38 +434,13 @@ const handleExit = (target: string, context: GameStore) => {
 };
 
 export const commands: CommandDefinition[] = [
-	{
-		name: "help",
-		aliases: ["h", "?"],
-		execute: handleHelp,
-	},
-	{
-		name: "restart",
-		execute: handleRestart,
-	},
-	{
-		name: "look",
-		aliases: ["l"],
-		execute: handleLook,
-	},
-	{
-		name: "inspect",
-		aliases: ["examine", "x"],
-		execute: handleInspect,
-	},
-	{
-		name: "open",
-		execute: handleOpen,
-	},
-	{
-		name: "close",
-		execute: handleClose,
-	},
-	{
-		name: "use",
-		aliases: ["u"],
-		execute: handleUse,
-	},
+	{ name: "help", aliases: ["h", "?"], execute: handleHelp },
+	{ name: "restart", execute: handleRestart },
+	{ name: "look", aliases: ["l"], execute: handleLook },
+	{ name: "inspect", aliases: ["examine", "x"], execute: handleInspect },
+	{ name: "open", execute: handleOpen },
+	{ name: "close", execute: handleClose },
+	{ name: "use", aliases: ["u"], execute: handleUse },
 	{
 		name: "take",
 		aliases: ["pick", "pick up", "grab", "hold", "possess", "acquire"],
@@ -638,55 +451,15 @@ export const commands: CommandDefinition[] = [
 		aliases: ["discard", "leave", "remove", "release"],
 		execute: handleDrop,
 	},
-	{
-		name: "inventory",
-		aliases: ["i", "bag"],
-		execute: handleShowInventory,
-	},
-	{
-		name: "consume",
-		execute: handleConsume,
-	},
-	{
-		name: "eat",
-		execute: handleEat,
-	},
-	{
-		name: "drink",
-		aliases: ["sip", "slurp"],
-		execute: handleDrink,
-	},
-	{
-		name: "go",
-		aliases: ["walk", "move"],
-		execute: handleGo,
-	},
-	{
-		name: "north",
-		aliases: ["n"],
-		execute: handleGoNorth,
-	},
-	{
-		name: "east",
-		aliases: ["e"],
-		execute: handleGoEast,
-	},
-	{
-		name: "west",
-		aliases: ["w"],
-		execute: handleGoWest,
-	},
-	{
-		name: "south",
-		aliases: ["s"],
-		execute: handleGoSouth,
-	},
-	{
-		name: "back",
-		execute: handleGoBack,
-	},
-	{
-		name: "exit",
-		execute: handleExit,
-	},
+	{ name: "inventory", aliases: ["i", "bag"], execute: handleShowInventory },
+	{ name: "consume", execute: handleConsume },
+	{ name: "eat", execute: handleEat },
+	{ name: "drink", aliases: ["sip", "slurp"], execute: handleDrink },
+	{ name: "go", aliases: ["walk", "move"], execute: handleGo },
+	{ name: "north", aliases: ["n"], execute: createDirectionalHandler("north") },
+	{ name: "east", aliases: ["e"], execute: createDirectionalHandler("east") },
+	{ name: "west", aliases: ["w"], execute: createDirectionalHandler("west") },
+	{ name: "south", aliases: ["s"], execute: createDirectionalHandler("south") },
+	{ name: "back", execute: handleGoBack },
+	{ name: "exit", execute: handleExit },
 ];
