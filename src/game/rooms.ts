@@ -13,17 +13,21 @@ export const rooms: { [key: string]: Room } = {
 	office: {
 		id: "office",
 		name: "Office",
-		briefDescription: "",
-		detailedDescription: "",
-		exitDescription: "",
+		briefDescription:
+			"The Office — a space marked by restraint and quiet formality.",
+		detailedDescription:
+			"The Office carries an air of subdued professionalism, its design leaning more toward function than flair.",
+		exitDescription: "An exit to the south returns you to the Lobby.",
 		exits: { south: "lobby" },
 	},
 	lab: {
 		id: "lab",
 		name: "Lab",
-		briefDescription: "",
-		detailedDescription: "",
-		exitDescription: "",
+		briefDescription:
+			"A dimly lit chamber where ideas hum louder than the lights.",
+		detailedDescription:
+			"A dimly lit chamber where ideas hum louder than the lights.",
+		exitDescription: "An exit to the west returns you to the Lobby.",
 		exits: { west: "lobby" },
 	},
 	study: {
@@ -31,7 +35,7 @@ export const rooms: { [key: string]: Room } = {
 		name: "Study",
 		briefDescription: "",
 		detailedDescription: "",
-		exitDescription: "",
+		exitDescription: "An exit to the east returns you to the Lobby.",
 		exits: { east: "lobby" },
 	},
 };

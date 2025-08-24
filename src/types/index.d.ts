@@ -1,6 +1,7 @@
 interface HistoryLine {
-	role: "system" | "player";
+	role: "system" | "system-link" | "player";
 	text: string;
+	link?: string;
 }
 
 interface Room {
@@ -16,7 +17,8 @@ interface Item {
 	id: string;
 	name: string;
 	aliases?: string[];
-	describeItem: string;
+	roomMention: string;
+	describeItem?: string;
 	inspectItem: () => void;
 	use: () => void;
 	take?: () => void;
@@ -39,7 +41,11 @@ interface GameState {
 interface GameActions {
 	startGame: () => void;
 	restartGame: () => void;
-	addLine: (text: string, role?: "system" | "player") => void;
+	addLine: (
+		text: string,
+		role?: "system" | "system-link" | "player",
+		link?: string
+	) => void;
 	setCurrentRoom: (roomId: string) => void;
 	setFlag: (flag: string, value: boolean | number) => void;
 	addToInventory: (item: Item) => void;

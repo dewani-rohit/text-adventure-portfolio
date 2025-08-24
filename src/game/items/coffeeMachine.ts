@@ -42,7 +42,7 @@ const useInspectCoffeeMachine = () => {
 export const coffeeMachine: Item = {
 	id: "coffeeMachine",
 	name: "coffee machine",
-	describeItem:
+	roomMention:
 		"There is a small coffee machine humming quietly in the corner, polished chrome gleaming in the soft light.",
 	inspectItem: useInspectCoffeeMachine,
 	use: useCoffeeMachine,

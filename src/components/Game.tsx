@@ -36,7 +36,21 @@ const Game = () => {
 							line.role === "player" ? "text-accent my-2" : ""
 						} whitespace-pre-wrap`}
 					>
-						{line.text}
+						{line.role === "system-link" ? (
+							<>
+								<span>{"	  "}</span>
+								<a
+									href={line.link}
+									target="_blank"
+									rel="noreferrer"
+									className="border-b border-dashed"
+								>
+									{line.text}
+								</a>
+							</>
+						) : (
+							<div>{line.text}</div>
+						)}
 					</div>
 				))}
 			</div>

@@ -19,7 +19,7 @@ const useInspectClock = () => {
 export const clock: Item = {
 	id: "clock",
 	name: "clock",
-	describeItem: "There is a wall clock hanging just above eye level.",
+	roomMention: "There is a wall clock hanging just above eye level.",
 	inspectItem: useInspectClock,
 	use: useClock,
 	portable: false,

@@ -6,9 +6,21 @@ import { generateRoomItemsDescription } from "../utils";
 import { coffeeMachine } from "./items/coffeeMachine";
 import { clock } from "./items/clock";
 import { fridge } from "./items/fridge";
+import { degrees } from "./items/degrees";
+import { binder } from "./items/binder";
+import { plaque } from "./items/plaque";
+import { towel } from "./items/towel";
+import { console } from "./items/console";
+import { emptyCup } from "./items/emptyCup";
+import { rubberDuck } from "./items/rubberDuck";
+import { cube } from "./items/holographicCube";
+import { portalGun } from "./items/portalGun";
 
 const INITIAL_ROOM_ITEMS: { [roomId: string]: Item[] } = {
 	lobby: [coffeeMachine, clock, fridge],
+	office: [binder, degrees, plaque, towel],
+	lab: [console, emptyCup, rubberDuck],
+	study: [cube, portalGun],
 };
 
 const INITIAL_FLAGS: { [flag: string]: boolean | number } = {
@@ -31,9 +43,9 @@ export const useGameStore = create<GameStore>()(
 		(set, get) => ({
 			...initializeGameState(),
 
-			addLine: (text, role = "system") =>
+			addLine: (text, role = "system", link) =>
 				set((state) => ({
-					history: [...state.history, { role, text }],
+					history: [...state.history, { role, text, link }],
 				})),
 
 			setCurrentRoom: (roomId) => {
@@ -49,7 +61,7 @@ export const useGameStore = create<GameStore>()(
 
 					const description = generateRoomItemsDescription(roomDesc, roomItems);
 
-					get().addLine(`\n[${room.name}]\n${description}`);
+					get().addLine(`[${room.name}]\n${description}`);
 				}
 			},
 

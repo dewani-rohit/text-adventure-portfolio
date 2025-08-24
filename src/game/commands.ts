@@ -283,6 +283,7 @@ const handleEat = (target: string, context: GameStore) => {
 	if (
 		validateCommand(target, context, {
 			noTargetMessage: "Hunger is clear, intent is not.",
+			needsItem: true,
 		})
 	)
 		return;
@@ -355,22 +356,23 @@ export const handleGo = (target: string, context: GameStore) => {
 			}
 
 			const exitExists = Object.values(currentRoomExits).includes(destination);
-			if (!exitExists) {
-				context.addLine(
-					"You can't go through walls. You're not a ghost... or fire."
-				);
+			const hasPortalGun = context.inventory.some((i) => i.id === "portalGun");
+			if (exitExists || hasPortalGun) {
+				if (
+					context.currentRoom === "lobby" &&
+					context.gameFlags["isFridgeOpen"]
+				) {
+					context.addLine("Ahem… the fridge. Still open.");
+					return;
+				}
+
+				context.setCurrentRoom(destination);
 				return;
 			}
 
-			if (
-				context.currentRoom === "lobby" &&
-				context.gameFlags["isFridgeOpen"]
-			) {
-				context.addLine("Ahem… the fridge. Still open.");
-				return;
-			}
-
-			context.setCurrentRoom(destination);
+			context.addLine(
+				"You can't go through walls. You're not a ghost... or fire."
+			);
 			return;
 		}
 	}
@@ -390,9 +392,7 @@ export const handleGo = (target: string, context: GameStore) => {
 	if (direction) {
 		const getRoom = currentRoomExits[direction];
 		if (!getRoom) {
-			context.addLine(
-				"Forward momentum meets solid object. Guess which one yields? (Hint: not the object.)"
-			);
+			context.addLine("That way leads… absolutely nowhere.");
 			return;
 		}
 		context.setCurrentRoom(getRoom);

@@ -1,7 +1,14 @@
 import { useGameStore } from "../store";
 
 const useCup = () => {
-	const { addLine } = useGameStore.getState();
+	const { addLine, inventory } = useGameStore.getState();
+
+	const isHoldingCup = inventory.some((i) => i.id === "emptyCup");
+
+	if (!isHoldingCup) {
+		addLine("You'd need to hold it first.");
+		return;
+	}
 
 	addLine(
 		"You tip the mug to your lips, but nothing greets you — only the hollow weight of cold porcelain."
@@ -39,7 +46,8 @@ export const emptyCup: Item = {
 	id: "emptyCup",
 	name: "empty cup",
 	aliases: ["cup"],
-	describeItem: "You also see an empty cup — a vessel yearning for purpose.",
+	roomMention: "There is also an empty cup.",
+	describeItem: "An empty cup — a vessel yearning for purpose.",
 	inspectItem: useInspectCup,
 	use: useCup,
 	portable: true,

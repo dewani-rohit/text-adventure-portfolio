@@ -45,7 +45,7 @@ const useInspectFridge = () => {
 export const fridge: Item = {
 	id: "fridge",
 	name: "fridge",
-	describeItem:
+	roomMention:
 		"A modest refrigerator rests against the wall, its smooth surface reflecting the room's faint light.",
 	inspectItem: useInspectFridge,
 	use: useFridge,

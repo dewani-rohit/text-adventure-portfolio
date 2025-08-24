@@ -71,8 +71,10 @@ const useDropCoffee = () => {
 export const coffee: Item = {
 	id: "coffee",
 	name: "coffee",
+	aliases: ["coffee cup", "cup of coffee"],
+	roomMention: "There is a cup of coffee on the counter.",
 	describeItem:
-		"There is a damn fine cup of coffee. Black as midnight on a moonless night.",
+		"A damn fine cup of coffee. Black as midnight on a moonless night.",
 	inspectItem: useInspectCoffee,
 	use: useCoffee,
 	usesLeft: 3,

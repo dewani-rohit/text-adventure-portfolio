@@ -9,7 +9,7 @@ export const generateRoomItemsDescription = (
 	const distRoomItems = [...new Set(roomItems)];
 
 	distRoomItems.map((item) => {
-		description += item.describeItem + "\t";
+		description += `${item.roomMention} `;
 	});
 
 	return description;
