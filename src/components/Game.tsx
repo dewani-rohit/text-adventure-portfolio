@@ -3,7 +3,14 @@ import { useGameStore } from "../game/store";
 import { processCommand } from "../game/commandProcessor";
 
 const Game = () => {
-	const { history, startGame } = useGameStore();
+	const {
+		history,
+		startGame,
+		addCommand,
+		historyIndex,
+		commandHistory,
+		setHistoryIndex,
+	} = useGameStore();
 	const inputRef = useRef<HTMLInputElement>(null);
 
 	useEffect(() => {
@@ -21,8 +28,33 @@ const Game = () => {
 	const handleKeyDown = (e: React.KeyboardEvent) => {
 		if (e.key === "Enter") {
 			const value = (e.target as HTMLInputElement).value;
+			if (value.trim()) {
+				addCommand(value);
+			}
 			processCommand(value);
 			(e.target as HTMLInputElement).value = "";
+		}
+		if (e.key === "ArrowUp") {
+			e.preventDefault();
+			const newIndex =
+				historyIndex === -1
+					? commandHistory.length - 1
+					: Math.max(0, historyIndex - 1);
+			setHistoryIndex(newIndex);
+			if (commandHistory[newIndex]) {
+				(e.target as HTMLInputElement).value = commandHistory[newIndex];
+			}
+		}
+		if (e.key === "ArrowDown") {
+			e.preventDefault();
+			const newIndex = Math.min(commandHistory.length, historyIndex + 1);
+			setHistoryIndex(newIndex);
+
+			if (newIndex === commandHistory.length) {
+				(e.target as HTMLInputElement).value = "";
+			} else {
+				(e.target as HTMLInputElement).value = commandHistory[newIndex];
+			}
 		}
 	};
 

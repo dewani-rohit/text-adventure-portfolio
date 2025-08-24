@@ -36,6 +36,8 @@ interface GameState {
 	roomItems: { [roomId: string]: Item[] };
 	gameFlags: { [key: string]: boolean | number };
 	inventory: Item[];
+	commandHistory: string[];
+	historyIndex: number;
 }
 
 interface GameActions {
@@ -53,6 +55,8 @@ interface GameActions {
 	updateInventoryItem: (id: string, updates: Partial<Item>) => void;
 	moveItemToRoom: (item: Item, roomId: string) => void;
 	removeItemFromRoom: (item: Item, roomId: string) => void;
+	addCommand: (command: string) => void;
+	setHistoryIndex: (index: number) => void;
 }
 
 type GameStore = GameState & GameActions;

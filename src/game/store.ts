@@ -36,6 +36,8 @@ const initializeGameState = () => ({
 	roomItems: INITIAL_ROOM_ITEMS,
 	gameFlags: INITIAL_FLAGS,
 	inventory: [],
+	commandHistory: [],
+	historyIndex: -1,
 });
 
 export const useGameStore = create<GameStore>()(
@@ -128,6 +130,17 @@ export const useGameStore = create<GameStore>()(
 					},
 				}));
 			},
+
+			addCommand: (command) =>
+				set((state) => ({
+					commandHistory:
+						state.commandHistory.length < 10
+							? [...state.commandHistory, command]
+							: [...state.commandHistory.slice(1), command],
+					historyIndex: -1,
+				})),
+
+			setHistoryIndex: (index) => set(() => ({ historyIndex: index })),
 		}),
 		{
 			name: "game-session",
